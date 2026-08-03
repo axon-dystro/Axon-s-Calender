@@ -1,9 +1,9 @@
 {
   "id": "illidor-calendar",
   "type": "module",
-  "title": "Axons Kalender",
+  "title": "Axon´s Calender",
   "description": "Ein vollständig anpassbarer Fantasy-Kalender für Foundry VTT 14 mit Kalender-Designer, frei positionierbarer Kristall-Uhr, Tagesphasen, mehreren Monden, Sondertagen, privaten und geteilten Spielernotizen sowie GM-Planung. Illidor ist als fertiges Preset enthalten.",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "authors": [
     {
       "name": "Axon"

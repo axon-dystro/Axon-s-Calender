@@ -1,6 +1,12 @@
 export const MODULE_ID = "illidor-calendar";
-export const MODULE_TITLE = "Axons Kalender";
+export const MODULE_TITLE = "Axon´s Calender";
 export const DATA_VERSION = 2;
+
+export const AUTHOR_LINKS = Object.freeze([
+  { id: "feedback", label: "Feedback", icon: "fa-comment-dots", url: "https://axon.dnd-tools.de/contact?type=feedback&project=axons-calender" },
+  { id: "support", label: "Support", icon: "fa-life-ring", url: "https://axon.dnd-tools.de/contact?type=support&project=axons-calender" },
+  { id: "donation", label: "Unterstützen", icon: "fa-heart", url: "https://axon.dnd-tools.de/contact?type=donation&project=axons-calender" }
+]);
 
 export const SETTINGS = Object.freeze({
   WORLD_ENABLED: "worldEnabled",
@@ -59,6 +65,17 @@ export const EVENT_CATEGORIES = Object.freeze([
 ]);
 
 export const DEFAULT_STATE = Object.freeze({
+  year: 1,
+  season: 1,
+  month: 1,
+  day: 1,
+  specialDay: null,
+  minuteOfDay: 8 * 60,
+  phase: PHASES.MORNING,
+  revision: 1
+});
+
+export const ILLIDOR_DEFAULT_STATE = Object.freeze({
   year: 278,
   season: 5,
   month: 2,

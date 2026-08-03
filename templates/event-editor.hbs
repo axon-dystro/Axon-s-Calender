@@ -1,5 +1,5 @@
 <form class="ac-event-form">
-  <header class="ac-event-hero"><span class="ac-event-gem"><i class="fa-solid fa-sparkles"></i></span><div><small>AXONS KALENDER</small><h1>{{#if isEditing}}Eintrag bearbeiten{{else}}Neuer Kalendereintrag{{/if}}</h1><p>{{startLabel}}</p></div></header>
+  <header class="ac-event-hero"><span class="ac-event-gem"><i class="fa-solid fa-sparkles"></i></span><div><small>AXON´S CALENDER</small><h1>{{#if isEditing}}Eintrag bearbeiten{{else}}Neuer Kalendereintrag{{/if}}</h1><p>{{startLabel}}</p></div></header>
   <div class="ac-form-grid">
     <label class="span-2"><span>Titel</span><input type="text" name="title" value="{{event.title}}" maxlength="160" required autofocus placeholder="Was geschieht?"></label>
     <label><span>Kategorie</span><select name="category">{{#each categories}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>

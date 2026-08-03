@@ -1,4 +1,4 @@
-import { ILLIDOR_PRESET, minutesPerDay, normalizeCalendarConfig } from "./calendar-config.js";
+import { NEUTRAL_PRESET, minutesPerDay, normalizeCalendarConfig } from "./calendar-config.js";
 
 export function cloneDate(date) {
   return {
@@ -10,7 +10,7 @@ export function cloneDate(date) {
   };
 }
 
-export function normalizeDate(date, calendar = ILLIDOR_PRESET) {
+export function normalizeDate(date, calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   const value = cloneDate(date ?? {});
   value.year = Number.isFinite(value.year) ? Math.trunc(value.year) : 1;
@@ -34,12 +34,12 @@ export function isSpecialDate(date) {
   return Number.isInteger(Number(date?.specialDay)) && Number(date.specialDay) >= 1;
 }
 
-export function daysInYear(calendar = ILLIDOR_PRESET) {
+export function daysInYear(calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   return config.seasons.reduce((total, season) => total + daysInSeason(season), 0);
 }
 
-export function regularDaysInYear(calendar = ILLIDOR_PRESET) {
+export function regularDaysInYear(calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   return config.seasons.reduce((total, season) => total + regularDaysInSeason(season), 0);
 }
@@ -52,7 +52,7 @@ export function daysInSeason(season) {
   return regularDaysInSeason(season) + (season.specialDay.enabled ? 1 : 0);
 }
 
-export function weekdayIndex(date, calendar = ILLIDOR_PRESET) {
+export function weekdayIndex(date, calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   const value = normalizeDate(date, config);
   if (isSpecialDate(value)) return null;
@@ -74,13 +74,13 @@ export function weekdayIndex(date, calendar = ILLIDOR_PRESET) {
   return positiveMod(index, config.weekdays.length);
 }
 
-export function weekdayName(date, calendar = ILLIDOR_PRESET) {
+export function weekdayName(date, calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   const index = weekdayIndex(date, config);
   return index == null ? null : config.weekdays[index];
 }
 
-export function dateToOrdinal(date, calendar = ILLIDOR_PRESET) {
+export function dateToOrdinal(date, calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   const value = normalizeDate(date, config);
   let ordinal = value.year * daysInYear(config);
@@ -92,7 +92,7 @@ export function dateToOrdinal(date, calendar = ILLIDOR_PRESET) {
   return ordinal + regularDaysBeforeMonth(season, value.month) + value.day - 1;
 }
 
-export function ordinalToDate(ordinal, calendar = ILLIDOR_PRESET) {
+export function ordinalToDate(ordinal, calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   const yearLength = daysInYear(config);
   let year = Math.floor(Number(ordinal) / yearLength);
@@ -133,24 +133,24 @@ export function ordinalToDate(ordinal, calendar = ILLIDOR_PRESET) {
   return { year, season: 1, month: 1, day: 1, specialDay: null };
 }
 
-export function compareDates(a, b, calendar = ILLIDOR_PRESET) {
+export function compareDates(a, b, calendar = NEUTRAL_PRESET) {
   return Math.sign(dateToOrdinal(a, calendar) - dateToOrdinal(b, calendar));
 }
 
-export function sameDate(a, b, calendar = ILLIDOR_PRESET) {
+export function sameDate(a, b, calendar = NEUTRAL_PRESET) {
   if (!a || !b) return false;
   return dateToOrdinal(a, calendar) === dateToOrdinal(b, calendar);
 }
 
-export function advanceDay(date, calendar = ILLIDOR_PRESET) {
+export function advanceDay(date, calendar = NEUTRAL_PRESET) {
   return ordinalToDate(dateToOrdinal(date, calendar) + 1, calendar);
 }
 
-export function retreatDay(date, calendar = ILLIDOR_PRESET) {
+export function retreatDay(date, calendar = NEUTRAL_PRESET) {
   return ordinalToDate(dateToOrdinal(date, calendar) - 1, calendar);
 }
 
-export function shiftPeriod(date, direction, calendar = ILLIDOR_PRESET) {
+export function shiftPeriod(date, direction, calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   const value = normalizeDate(date, config);
   const step = direction >= 0 ? 1 : -1;
@@ -169,7 +169,7 @@ export function shiftPeriod(date, direction, calendar = ILLIDOR_PRESET) {
   return { ...previous, day: 1 };
 }
 
-export function phaseForMinute(minute, calendar = ILLIDOR_PRESET) {
+export function phaseForMinute(minute, calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   const inDay = positiveMod(Math.trunc(Number(minute) || 0), minutesPerDay(config));
   let active = config.phases[config.phases.length - 1];
@@ -180,16 +180,16 @@ export function phaseForMinute(minute, calendar = ILLIDOR_PRESET) {
   return active;
 }
 
-export function phaseById(id, calendar = ILLIDOR_PRESET) {
+export function phaseById(id, calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   return config.phases.find((phase) => phase.id === id) ?? config.phases[0];
 }
 
-export function normalizeMinute(minute, calendar = ILLIDOR_PRESET) {
+export function normalizeMinute(minute, calendar = NEUTRAL_PRESET) {
   return positiveMod(Math.trunc(Number(minute) || 0), minutesPerDay(calendar));
 }
 
-export function formatTime(minute, calendar = ILLIDOR_PRESET) {
+export function formatTime(minute, calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   const normalized = normalizeMinute(minute, config);
   const hour = Math.floor(normalized / config.day.minutesPerHour);
@@ -198,7 +198,7 @@ export function formatTime(minute, calendar = ILLIDOR_PRESET) {
   return `${String(hour).padStart(2, "0")}:${String(minutePart).padStart(width, "0")}`;
 }
 
-export function moonState(date, calendar = ILLIDOR_PRESET, moonDefinition = null) {
+export function moonState(date, calendar = NEUTRAL_PRESET, moonDefinition = null) {
   const config = normalizeCalendarConfig(calendar);
   const moon = moonDefinition ?? config.moons[0];
   if (!moon) return null;
@@ -238,19 +238,19 @@ export function moonState(date, calendar = ILLIDOR_PRESET, moonDefinition = null
   };
 }
 
-export function moonStates(date, calendar = ILLIDOR_PRESET) {
+export function moonStates(date, calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   return config.moons.map((moon) => moonState(date, config, moon));
 }
 
-export function eventOccursOn(event, date, calendar = ILLIDOR_PRESET) {
+export function eventOccursOn(event, date, calendar = NEUTRAL_PRESET) {
   if (!event?.start) return false;
   const targetOrdinal = dateToOrdinal(date, calendar);
   return targetOrdinal >= dateToOrdinal(event.start, calendar)
     && targetOrdinal <= dateToOrdinal(event.end ?? event.start, calendar);
 }
 
-export function formatDate(date, calendar = ILLIDOR_PRESET, { compact = false } = {}) {
+export function formatDate(date, calendar = NEUTRAL_PRESET, { compact = false } = {}) {
   const config = normalizeCalendarConfig(calendar);
   const value = normalizeDate(date, config);
   const season = config.seasons[value.season - 1];
@@ -266,7 +266,7 @@ export function formatDate(date, calendar = ILLIDOR_PRESET, { compact = false } 
   return `${weekdayName(value, config)}, ${value.day}. Tag · ${month.name} · ${season.name} · ${value.year}${era}`;
 }
 
-export function periodLabel(date, calendar = ILLIDOR_PRESET) {
+export function periodLabel(date, calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   const value = normalizeDate(date, config);
   const season = config.seasons[value.season - 1];
@@ -279,21 +279,21 @@ export function periodLabel(date, calendar = ILLIDOR_PRESET) {
   return `${season.name} · ${season.months[value.month - 1].name} · ${value.year}${era}`;
 }
 
-export function dateKey(date, calendar = ILLIDOR_PRESET) {
+export function dateKey(date, calendar = NEUTRAL_PRESET) {
   const value = normalizeDate(date, calendar);
   return [value.year, value.season, value.month ?? 0, value.day ?? 0, value.specialDay ?? 0].join(":");
 }
 
-export function parseDateKey(key, calendar = ILLIDOR_PRESET) {
+export function parseDateKey(key, calendar = NEUTRAL_PRESET) {
   const [year, season, month, day, specialDay] = String(key).split(":").map(Number);
   return normalizeDate({ year, season, month: month || null, day: day || null, specialDay: specialDay || null }, calendar);
 }
 
-export function absoluteMinute(state, calendar = ILLIDOR_PRESET) {
+export function absoluteMinute(state, calendar = NEUTRAL_PRESET) {
   return dateToOrdinal(state, calendar) * minutesPerDay(calendar) + normalizeMinute(state.minuteOfDay, calendar);
 }
 
-export function stateFromAbsoluteMinute(value, calendar = ILLIDOR_PRESET) {
+export function stateFromAbsoluteMinute(value, calendar = NEUTRAL_PRESET) {
   const perDay = minutesPerDay(calendar);
   const ordinal = Math.floor(Number(value) / perDay);
   const minuteOfDay = positiveMod(Math.trunc(Number(value)), perDay);

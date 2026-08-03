@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { createBlankPreset, ILLIDOR_PRESET, normalizeCalendarConfig } from "../scripts/calendar-config.js";
+import { createBlankPreset, ILLIDOR_PRESET, NEUTRAL_PRESET, normalizeCalendarConfig } from "../scripts/calendar-config.js";
 import {
   absoluteMinute,
   advanceDay,
@@ -97,6 +97,26 @@ test("neutrales Preset und variable Monatslängen funktionieren", () => {
   assert.deepEqual(advanceDay({ year: 1, season: 1, month: 2, day: 5 }, config), {
     year: 1, season: 1, month: null, day: null, specialDay: 1
   });
+});
+
+test("neue Installationen starten neutral statt mit Illidor", () => {
+  const config = normalizeCalendarConfig(NEUTRAL_PRESET);
+  assert.equal(config.id, "custom-calendar");
+  assert.equal(config.name, "Mein Kalender");
+  assert.equal(config.seasons.length, 1);
+  assert.equal(config.seasons[0].months.length, 1);
+  assert.equal(config.moons.length, 0);
+  assert.equal(config.weekdays.includes("Osda"), false);
+});
+
+test("Designfarben werden übernommen und ungültige Farben abgefangen", () => {
+  const custom = normalizeCalendarConfig({
+    ...structuredClone(NEUTRAL_PRESET),
+    theme: { primary: "#12abef", secondary: "#fedcba" }
+  });
+  assert.deepEqual(custom.theme, { primary: "#12abef", secondary: "#fedcba" });
+  const safe = normalizeCalendarConfig({ ...structuredClone(NEUTRAL_PRESET), theme: { primary: "red", secondary: "" } });
+  assert.deepEqual(safe.theme, { primary: "#f06bc7", secondary: "#a765ff" });
 });
 
 test("beschädigte Importwerte werden auf sichere Grenzen normalisiert", () => {

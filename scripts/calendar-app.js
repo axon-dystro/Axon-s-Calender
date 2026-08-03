@@ -1,4 +1,4 @@
-import { MODULE_ID, SETTINGS, VISIBILITY } from "./constants.js";
+import { AUTHOR_LINKS, MODULE_ID, SETTINGS, VISIBILITY } from "./constants.js";
 import {
   dateKey,
   dateToOrdinal,
@@ -30,7 +30,7 @@ export class CalendarApp extends HandlebarsApplicationMixin(ApplicationV2) {
     id: `${MODULE_ID}-calendar-app`,
     classes: [MODULE_ID, "axon-calendar-app"],
     tag: "section",
-    window: { title: "Axons Kalender", icon: "fa-solid fa-gem", resizable: true },
+    window: { title: "Axon´s Calender", icon: "fa-solid fa-gem", resizable: true },
     position: { width: 1160, height: 790 }
   };
 
@@ -107,6 +107,7 @@ export class CalendarApp extends HandlebarsApplicationMixin(ApplicationV2) {
       selectedLabel: formatDate(selected, config),
       specialDescription: viewingSpecial ? specialDescription(this.viewDate, config) : null,
       selectedEvents: events.filter((event) => eventOccursOn(event, selected, config)).map((event) => eventContext(event, config)),
+      authorLinks: AUTHOR_LINKS,
       config
     };
 

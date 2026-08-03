@@ -3,6 +3,7 @@ import { MODULE_ID, SETTINGS } from "./constants.js";
 import { formatTime, isSpecialDate, normalizeDate } from "./calendar-engine.js";
 import { getCalendarConfig, getFeatureSettings, setCalendarConfig, setFeatureSettings } from "./settings.js";
 import { CalendarStore } from "./store.js";
+import { applyTheme } from "./theme.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -24,7 +25,7 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
     classes: [MODULE_ID, "axon-calendar-config"],
     tag: "section",
     window: {
-      title: "Axons Kalender · Designer",
+      title: "Axon´s Calender · Designer",
       icon: "fa-solid fa-wand-magic-sparkles",
       resizable: true
     },
@@ -42,6 +43,11 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
     this.featureDraft = getFeatureSettings();
     this.activeTab = "general";
     this.message = null;
+  }
+
+  async close(options = {}) {
+    applyTheme(getCalendarConfig());
+    return super.close(options);
   }
 
   async _prepareContext() {
@@ -116,6 +122,14 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
       root.querySelector("[data-current-regular]")?.classList.toggle("is-hidden", event.currentTarget.value === "special");
     });
     root.querySelector("[data-action='import-file']")?.addEventListener("change", (event) => this.#importFile(event));
+    root.querySelectorAll("[data-theme-color]").forEach((input) => input.addEventListener("input", () => {
+      const primary = root.querySelector("[name='themePrimary']")?.value;
+      const secondary = root.querySelector("[name='themeSecondary']")?.value;
+      const preview = root.querySelector(".ac-theme-builder");
+      preview?.style.setProperty("--theme-primary", primary);
+      preview?.style.setProperty("--theme-secondary", secondary);
+      applyTheme({ primary, secondary });
+    }));
   }
 
   async #action(event, root) {
@@ -172,6 +186,7 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
       return;
     }
     this.message = null;
+    applyTheme(this.draft);
     this.render({ force: true });
   }
 
@@ -183,6 +198,10 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
     draft.name = String(data.get("calendarName") ?? draft.name);
     draft.description = String(data.get("calendarDescription") ?? draft.description);
     draft.eraLabel = String(data.get("eraLabel") ?? draft.eraLabel);
+    draft.theme = {
+      primary: String(data.get("themePrimary") ?? draft.theme?.primary ?? "#f06bc7"),
+      secondary: String(data.get("themeSecondary") ?? draft.theme?.secondary ?? "#a765ff")
+    };
     draft.weekdays = String(data.get("weekdays") ?? "").split(/\r?\n/).map((entry) => entry.trim()).filter(Boolean);
     draft.week = {
       firstWeekday: Number(data.get("firstWeekday") ?? 0),
@@ -263,12 +282,13 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
     }
     try {
       const config = await setCalendarConfig(this.draft);
+      applyTheme(config);
       await setFeatureSettings(this.featureDraft);
       await CalendarStore.setState({ ...normalizeDate(this.stateDraft, config), minuteOfDay: this.stateDraft.minuteOfDay }, "designer-save", { syncFoundryTime: false });
       this.draft = config;
       this.stateDraft = CalendarStore.getState();
       this.message = { success: true, text: "Kalender gespeichert. Alle verbundenen Spieler sehen die Änderungen sofort." };
-      ui.notifications.info("Axons Kalender wurde gespeichert.");
+      ui.notifications.info("Axon´s Calender wurde gespeichert.");
       await this.render({ force: true });
     } catch (error) {
       console.error(`${MODULE_ID} | Kalender konnte nicht gespeichert werden`, error);
@@ -302,6 +322,7 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
       const payload = JSON.parse(await file.text());
       const calendar = payload.calendar ?? payload;
       this.draft = normalizeCalendarConfig(calendar);
+      applyTheme(this.draft);
       if (payload.state) this.stateDraft = payload.state;
       if (payload.features) this.featureDraft = { ...this.featureDraft, ...payload.features };
       this.message = { success: true, text: "Import geladen. Prüfe die Vorschau und klicke anschließend auf Speichern." };

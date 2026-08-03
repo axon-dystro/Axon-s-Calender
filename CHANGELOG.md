@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.1.0 – 2026-08-03 · erste öffentliche Ausgabe
+
+### Neu
+
+- öffentlicher Modulname **Axon´s Calender**
+- Primär- und Sekundärfarbe des vollständigen Glasdesigns im Kalender-Designer einstellbar
+- Live-Vorschau der ausgewählten Designfarben
+- neutraler Erststart ohne Illidor-Namen oder Illidor-Mond
+- Illidor bleibt als freiwillig auswählbares Preset erhalten
+- Feedback-, Support- und Unterstützen-Buttons führen zu Axons Portfolio
+
+### Datensicherheit
+
+- bestehende gespeicherte Kalender werden beim Update nicht verändert
+- eine ältere Dev-Welt, die nur das damalige Illidor-Standardpreset verwendet hat, wird vor dem Wechsel des Installationsstandards automatisch gesichert
+- technische Modul-ID bleibt zur Datenkompatibilität `illidor-calendar`
+
 ## 1.0.1 – 2026-08-03
 
 ### Neu

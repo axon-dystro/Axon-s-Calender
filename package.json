@@ -1,10 +1,10 @@
 {
-  "name": "axons-calendar",
-  "version": "1.0.1",
+  "name": "axons-calender",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check scripts/calendar-config.js && node --check scripts/calendar-engine.js && node --check scripts/settings.js && node --check scripts/store.js && node --check scripts/config-app.js && node --check scripts/calendar-app.js && node --check scripts/event-editor.js && node --check scripts/hud.js && node --check scripts/main.js"
+    "check": "node --check scripts/theme.js && node --check scripts/calendar-config.js && node --check scripts/calendar-engine.js && node --check scripts/settings.js && node --check scripts/store.js && node --check scripts/config-app.js && node --check scripts/calendar-app.js && node --check scripts/event-editor.js && node --check scripts/hud.js && node --check scripts/main.js"
   }
 }

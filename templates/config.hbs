@@ -30,6 +30,13 @@
         <label class="span-2"><span>Kurze Beschreibung</span><textarea name="calendarDescription" rows="2" maxlength="500">{{config.description}}</textarea></label>
       </div>
 
+      <div class="ac-section-heading compact"><div><span>02</span><h2>Designfarben</h2></div><p>Beide Farben werden auf Glas, Leuchten, Schalter, Auswahlflächen und Akzente angewendet.</p></div>
+      <div class="ac-theme-builder" style="--theme-primary: {{config.theme.primary}}; --theme-secondary: {{config.theme.secondary}}">
+        <label><span>Primärfarbe</span><input type="color" name="themePrimary" value="{{config.theme.primary}}" data-theme-color></label>
+        <label><span>Sekundärfarbe</span><input type="color" name="themeSecondary" value="{{config.theme.secondary}}" data-theme-color></label>
+        <div class="ac-theme-preview" aria-label="Vorschau"><span></span><strong>GLASS THEME</strong><i></i></div>
+      </div>
+
       <div class="ac-now-card">
         <div class="ac-now-orb"><i class="fa-solid fa-location-crosshairs"></i></div>
         <div class="ac-now-fields">
@@ -44,7 +51,7 @@
         </div>
       </div>
 
-      <div class="ac-section-heading compact"><div><span>02</span><h2>Wochenrhythmus</h2></div></div>
+      <div class="ac-section-heading compact"><div><span>03</span><h2>Wochenrhythmus</h2></div></div>
       <div class="ac-form-grid">
         <label><span>Wochenreset</span><select name="weekReset">{{#each weekResetOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
         <label><span>Erster Wochentag (Index ab 0)</span><input type="number" name="firstWeekday" value="{{config.week.firstWeekday}}" min="0" max="13"></label>
@@ -54,7 +61,7 @@
     </section>
 
     <section class="ac-config-panel {{#unless tabs.1.active}}is-hidden{{/unless}}" data-panel="structure">
-      <div class="ac-section-heading"><div><span>03</span><h2>Jahreszeiten, Monate & Sondertage</h2></div><p>Jede Jahreszeit kann ihre eigenen Monate und Monatslängen haben.</p></div>
+      <div class="ac-section-heading"><div><span>04</span><h2>Jahreszeiten, Monate & Sondertage</h2></div><p>Jede Jahreszeit kann ihre eigenen Monate und Monatslängen haben.</p></div>
       <div class="ac-season-list">
         {{#each seasons}}
           <article class="ac-season-builder" data-season-row data-season-index="{{index}}" style="--season-color: {{color}}">
@@ -88,7 +95,7 @@
     </section>
 
     <section class="ac-config-panel {{#unless tabs.2.active}}is-hidden{{/unless}}" data-panel="moons">
-      <div class="ac-section-heading"><div><span>04</span><h2>Monde & Zyklen</h2></div><p>Null Monde ist ebenfalls erlaubt. Klima und Wetter kommen später als getrennte Erweiterung.</p></div>
+      <div class="ac-section-heading"><div><span>05</span><h2>Monde & Zyklen</h2></div><p>Null Monde ist ebenfalls erlaubt. Klima und Wetter kommen später als getrennte Erweiterung.</p></div>
       <div class="ac-moon-list">
         {{#each moons}}
           <article class="ac-moon-builder" data-moon-row style="--moon-color: {{color}}">
@@ -112,7 +119,7 @@
     </section>
 
     <section class="ac-config-panel {{#unless tabs.3.active}}is-hidden{{/unless}}" data-panel="phases">
-      <div class="ac-section-heading"><div><span>05</span><h2>Uhr & Tagesphasen</h2></div><p>Die Uhr darf auch von einem 24-Stunden-Tag abweichen.</p></div>
+      <div class="ac-section-heading"><div><span>06</span><h2>Uhr & Tagesphasen</h2></div><p>Die Uhr darf auch von einem 24-Stunden-Tag abweichen.</p></div>
       <div class="ac-form-grid ac-time-basics">
         <label><span>Stunden pro Tag</span><input type="number" name="hours" value="{{config.day.hours}}" min="1" max="100"></label>
         <label><span>Minuten pro Stunde</span><input type="number" name="minutesPerHour" value="{{config.day.minutesPerHour}}" min="1" max="100"></label>
@@ -136,7 +143,7 @@
     </section>
 
     <section class="ac-config-panel {{#unless tabs.4.active}}is-hidden{{/unless}}" data-panel="features">
-      <div class="ac-section-heading"><div><span>06</span><h2>Module & Verhalten</h2></div><p>Alles bleibt einzeln abschaltbar. Die Szenenhelligkeit ist absichtlich opt-in.</p></div>
+      <div class="ac-section-heading"><div><span>07</span><h2>Module & Verhalten</h2></div><p>Alles bleibt einzeln abschaltbar. Die Szenenhelligkeit ist absichtlich opt-in.</p></div>
       <div class="ac-feature-grid">
         {{#each features}}
           <label class="ac-feature-card">

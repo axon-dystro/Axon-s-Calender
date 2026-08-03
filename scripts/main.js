@@ -4,11 +4,12 @@ import { CalendarConfigApp } from "./config-app.js";
 import { CalendarHud } from "./hud.js";
 import { getCalendarConfig, isModuleUsable, migrateLegacySettings, registerSettings } from "./settings.js";
 import { CalendarStore } from "./store.js";
+import { applyTheme } from "./theme.js";
 
 Hooks.once("init", () => {
   registerSettings(CalendarConfigApp);
   game.keybindings.register(MODULE_ID, "openCalendar", {
-    name: "Axons Kalender öffnen",
+    name: "Axon´s Calender öffnen",
     hint: "Öffnet oder fokussiert den Kampagnenkalender.",
     editable: [{ key: "KeyK" }],
     restricted: false,
@@ -43,9 +44,10 @@ Hooks.once("ready", async () => {
     }
   } catch (error) {
     console.error(`${MODULE_ID} | Vorbereitung der Welt ist fehlgeschlagen`, error);
-    ui.notifications.error("Axons Kalender konnte seine Welt-Daten nicht vollständig vorbereiten. Bitte prüfe die Konsole.");
+    ui.notifications.error("Axon´s Calender konnte seine Welt-Daten nicht vollständig vorbereiten. Bitte prüfe die Konsole.");
   }
   game.socket?.on(`module.${MODULE_ID}`, handleSocketMessage);
+  applyTheme(getCalendarConfig());
   CalendarHud.mount();
   window.addEventListener("resize", debounce(() => CalendarHud.mount(), 150));
 });
@@ -61,6 +63,7 @@ Hooks.on("updateJournalEntry", (document) => {
 Hooks.on("updateUser", () => refreshAll());
 
 async function refreshAll() {
+  applyTheme(getCalendarConfig());
   CalendarHud.mount();
   const calendarEnabled = isModuleUsable() && game.settings.get(MODULE_ID, SETTINGS.FEATURE_CALENDAR);
   if (!calendarEnabled && CalendarApp.instance) return CalendarApp.instance.close();

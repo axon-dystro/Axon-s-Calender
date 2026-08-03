@@ -5,7 +5,7 @@
       <div class="ac-moon-watermark" aria-hidden="true" style="--moon-color: {{backgroundMoon.color}}; --moon-phase: {{backgroundMoon.fraction}}">{{backgroundMoon.icon}}</div>
     {{/if}}
     <div class="ac-brand-line">
-      <div><span class="ac-brand-gem">A</span><div><strong>{{calendarName}}</strong><small>AXONS CALENDAR ENGINE</small></div></div>
+      <div><span class="ac-brand-gem">A</span><div><strong>{{calendarName}}</strong><small>AXON´S CALENDER ENGINE</small></div></div>
       <div class="ac-current-time"><span style="--phase-color: {{currentPhase.color}}">{{currentPhase.icon}}</span><div><strong>{{currentTime}}</strong><small>{{currentPhase.name}}</small></div></div>
       {{#if isGM}}<button type="button" class="ac-icon-button" data-action="configure" title="Kalender-Designer öffnen"><i class="fa-solid fa-wand-magic-sparkles"></i></button>{{/if}}
     </div>
@@ -109,6 +109,12 @@
           </article>
         {{else}}<p class="ac-empty-note">Für diesen Tag gibt es in dieser Ansicht noch keine Einträge.</p>{{/each}}
       </div>
+      <footer class="ac-author-links">
+        <small>AXON · PROJEKT & HILFE</small>
+        <nav aria-label="Feedback, Support und Unterstützung">
+          {{#each authorLinks}}<a href="{{url}}" target="_blank" rel="noopener noreferrer" title="{{label}}"><i class="fa-solid {{icon}}"></i><span>{{label}}</span></a>{{/each}}
+        </nav>
+      </footer>
     </aside>
   </main>
 </div>

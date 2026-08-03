@@ -1,13 +1,15 @@
 import { PHASES } from "./constants.js";
+import { DEFAULT_THEME, normalizeTheme } from "./theme.js";
 
 const ILLIDOR_WEEKDAYS = ["Osda", "Desda", "Troda", "Alda", "Miéda", "Silda", "Tokda", "Suda"];
 
 export const ILLIDOR_PRESET = deepFreeze({
-  schemaVersion: 2,
+  schemaVersion: 3,
   id: "illidor",
   name: "Illidor",
   description: "Axons ursprünglicher Kalender: sechs Jahreszeiten, acht Wochentage und ein Sondertag nach jeder Jahreszeit.",
   eraLabel: "e.e.",
+  theme: structuredClone(DEFAULT_THEME),
   weekdays: ILLIDOR_WEEKDAYS,
   week: {
     firstWeekday: 0,
@@ -62,43 +64,56 @@ export const ILLIDOR_PRESET = deepFreeze({
   }
 });
 
+export const NEUTRAL_PRESET = deepFreeze({
+  schemaVersion: 3,
+  id: "custom-calendar",
+  name: "Mein Kalender",
+  description: "Ein eigener, frei konfigurierbarer Kampagnenkalender.",
+  eraLabel: "",
+  theme: structuredClone(DEFAULT_THEME),
+  weekdays: ["Tag 1", "Tag 2", "Tag 3", "Tag 4", "Tag 5", "Tag 6", "Tag 7"],
+  week: {
+    firstWeekday: 0,
+    reset: "year",
+    specialDaysAdvance: false
+  },
+  seasons: [{
+    id: "season-1",
+    name: "Jahreskreis",
+    color: DEFAULT_THEME.secondary,
+    months: [{ id: "month-1", name: "Monat 1", days: 30 }],
+    specialDay: {
+      enabled: false,
+      id: "special-1",
+      name: "Sondertag",
+      outsideYear: false,
+      description: ""
+    }
+  }],
+  day: {
+    hours: 24,
+    minutesPerHour: 60,
+    stepMinutes: 10,
+    nextDayPhaseId: PHASES.MORNING
+  },
+  phases: [
+    { id: PHASES.MORNING, name: "Morgen", startMinute: 6 * 60, icon: "🌅", color: "#ff9acb", darkness: 0.3 },
+    { id: PHASES.DAY, name: "Tag", startMinute: 9 * 60, icon: "☀️", color: "#ffd3ef", darkness: 0 },
+    { id: PHASES.EVENING, name: "Abend", startMinute: 18 * 60, icon: "🌇", color: DEFAULT_THEME.secondary, darkness: 0.55 },
+    { id: PHASES.NIGHT, name: "Nacht", startMinute: 22 * 60, icon: "🌙", color: "#7185ff", darkness: 0.85 }
+  ],
+  moons: [],
+  extensions: { climate: null }
+});
+
 export function createBlankPreset() {
-  return normalizeCalendarConfig({
-    ...structuredClone(ILLIDOR_PRESET),
-    id: "custom",
-    name: "Meine Welt",
-    description: "Ein frei konfigurierter Kampagnenkalender.",
-    eraLabel: "n.Z.",
-    weekdays: ["Tag 1", "Tag 2", "Tag 3", "Tag 4", "Tag 5", "Tag 6", "Tag 7"],
-    week: { firstWeekday: 0, reset: "year", specialDaysAdvance: false },
-    seasons: [{
-      id: "season-1",
-      name: "Jahreskreis",
-      color: "#c879ff",
-      months: Array.from({ length: 12 }, (_, index) => ({
-        id: `month-${index + 1}`,
-        name: `Monat ${index + 1}`,
-        days: 30
-      })),
-      specialDay: { enabled: false, id: "special-1", name: "Sondertag", outsideYear: false, description: "" }
-    }],
-    moons: [{
-      id: "moon-1",
-      name: "Mond",
-      cycleDays: 28,
-      offsetDays: 0,
-      color: "#eadcff",
-      fullOnSpecialDays: false,
-      alwaysVisibleOnOutsideYear: false,
-      turningLabel: "Neumond"
-    }]
-  });
+  return normalizeCalendarConfig(structuredClone(NEUTRAL_PRESET));
 }
 
-export function normalizeCalendarConfig(input = ILLIDOR_PRESET) {
+export function normalizeCalendarConfig(input = NEUTRAL_PRESET) {
   const source = input && typeof input === "object" ? input : {};
-  const weekdays = normalizeNames(source.weekdays, ILLIDOR_PRESET.weekdays, 1, 14);
-  const seasonsSource = Array.isArray(source.seasons) && source.seasons.length ? source.seasons.slice(0, 24) : ILLIDOR_PRESET.seasons;
+  const weekdays = normalizeNames(source.weekdays, NEUTRAL_PRESET.weekdays, 1, 14);
+  const seasonsSource = Array.isArray(source.seasons) && source.seasons.length ? source.seasons.slice(0, 24) : NEUTRAL_PRESET.seasons;
   const seasons = seasonsSource.map((season, seasonIndex) => normalizeSeason(season, seasonIndex));
   const hours = clampInt(source.day?.hours, 1, 100, 24);
   const minutesPerHour = clampInt(source.day?.minutesPerHour, 1, 100, 60);
@@ -108,11 +123,12 @@ export function normalizeCalendarConfig(input = ILLIDOR_PRESET) {
   const requestedNextPhase = safeId(source.day?.nextDayPhaseId, phases[0].id);
 
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: safeId(source.id, "custom"),
     name: safeText(source.name, "Meine Welt", 80),
     description: safeText(source.description, "", 500),
     eraLabel: safeText(source.eraLabel, "", 24),
+    theme: normalizeTheme(source.theme),
     weekdays,
     week: {
       firstWeekday: clampInt(source.week?.firstWeekday, 0, weekdays.length - 1, 0),
@@ -156,7 +172,7 @@ export function minutesPerDay(config) {
 }
 
 function normalizeSeason(source, seasonIndex) {
-  const fallback = ILLIDOR_PRESET.seasons[seasonIndex % ILLIDOR_PRESET.seasons.length];
+  const fallback = NEUTRAL_PRESET.seasons[seasonIndex % NEUTRAL_PRESET.seasons.length];
   const monthsSource = Array.isArray(source?.months) && source.months.length ? source.months.slice(0, 24) : fallback.months;
   const seasonId = safeId(source?.id, `season-${seasonIndex + 1}`);
   return {
@@ -179,7 +195,7 @@ function normalizeSeason(source, seasonIndex) {
 }
 
 function normalizePhases(source, minutesInDay) {
-  const phasesSource = Array.isArray(source) && source.length ? source.slice(0, 16) : ILLIDOR_PRESET.phases;
+  const phasesSource = Array.isArray(source) && source.length ? source.slice(0, 16) : NEUTRAL_PRESET.phases;
   const used = new Set();
   return phasesSource.map((phase, index) => {
     let id = safeId(phase?.id, `phase-${index + 1}`);
@@ -197,7 +213,7 @@ function normalizePhases(source, minutesInDay) {
 }
 
 function normalizeMoons(source) {
-  if (!Array.isArray(source)) return structuredClone(ILLIDOR_PRESET.moons);
+  if (!Array.isArray(source)) return structuredClone(NEUTRAL_PRESET.moons);
   return source.slice(0, 8).map((moon, index) => ({
     id: safeId(moon?.id, `moon-${index + 1}`),
     name: safeText(moon?.name, `Mond ${index + 1}`, 60),

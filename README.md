@@ -1,12 +1,15 @@
-# Axons Kalender
+# Axon´s Calender
 
 Ein eigenständiges, vollständig in Foundry VTT 14 konfigurierbares Fantasy-Kalender-Modul. Jeder GM kann einen persönlichen Weltkalender bauen, ohne JavaScript, CSS oder JSON bearbeiten zu müssen. Der ursprüngliche Illidor-Kalender ist als fertiges Preset enthalten.
+
+Neue Welten beginnen mit einem neutralen, technisch funktionsfähigen Rohbau: keine Illidor-Namen, kein Illidor-Mond und nur eine allgemeine Jahreszeit mit einem Monat. Illidor wird ausschließlich geladen, wenn der GM das Preset bewusst auswählt. Bestehende Welten behalten ihre gespeicherte Struktur.
 
 > **Technischer Hinweis:** Die interne Modul-ID bleibt `illidor-calendar`. Dadurch werden beim Update von Version 0.1 bestehender Kalenderstand, Ereignisse, Spielernotizen und die private GM-Planung weitergefunden.
 
 ## Das ist enthalten
 
 - visueller GM-Kalender-Designer direkt in den Moduleinstellungen
+- frei wählbare Primär- und Sekundärfarbe für Glasflächen, Leuchten, Schalter und Auswahlzustände
 - frei viele Wochentage, Jahreszeiten, Monate und individuelle Monatslängen
 - optionale Sondertage nach jeder Jahreszeit, auch „zwischen den Jahren“
 - Wochenrhythmus pro Jahreszeit, pro Jahr oder endlos fortlaufend
@@ -18,6 +21,7 @@ Ein eigenständiges, vollständig in Foundry VTT 14 konfigurierbares Fantasy-Kal
 - öffentliche GM-Ereignisse und geheime GM-Planung
 - private Spielernotizen sowie von Spielern mit der Gruppe geteilte Notizen
 - JSON-Export und -Import der Kalenderstruktur
+- feste Links zu Feedback, Support und Unterstützung über `axon.dnd-tools.de`
 - optionale Synchronisierung mit Foundrys offizieller Weltzeit
 - optionale Anpassung der aktiven Szenenhelligkeit
 - einzelne Welt- und Client-Schalter für Performance und Barrierefreiheit
@@ -34,10 +38,12 @@ Ein eigenständiges, vollständig in Foundry VTT 14 konfigurierbares Fantasy-Kal
 
 ## Bedienung
 
-1. Aktiviere **Axons Kalender** in der Welt.
-2. Öffne **Spieleinstellungen → Moduleinstellungen → Axons Kalender konfigurieren**.
+1. Aktiviere **Axon´s Calender** in der Welt.
+2. Öffne **Spieleinstellungen → Moduleinstellungen → Axon´s Calender konfigurieren**.
 3. Passe Struktur, Monde, Tagesphasen und Modulschalter an.
 4. Speichere. Verbundene Spieler erhalten den neuen Kalender sofort.
+
+Die beiden globalen Designfarben liegen im Designer unter **Grundlagen → Designfarben**. Änderungen werden während der Auswahl direkt als Vorschau angezeigt und erst mit **Kalender speichern** dauerhaft für die Welt übernommen.
 
 Der Kalender öffnet standardmäßig mit **K**. Die Tastenkombination kann in Foundrys Tastenbelegung geändert werden. Die ausgeklappte Uhr wird am Griff, die kompakte Kristallansicht direkt am Kristall frei über den Bildschirm gezogen. Ihre Bildschirmmitte bleibt beim Ein- und Ausklappen erhalten. Ein Rechtsklick setzt die Position zurück.
 
@@ -53,7 +59,7 @@ Beim Erstellen einer Spielernotiz kann unter **Sichtbarkeit** zwischen **Privat 
 
 ## Zeit und Szenen
 
-Mit **Foundry-Weltzeit mitführen** bewegt die Kristall-Uhr Foundrys `game.time` mit. Änderungen anderer Zeitmodule überschreiben Axons Kalender absichtlich nicht automatisch. So entstehen keine Rückkopplungsschleifen zwischen mehreren Zeitmodulen.
+Mit **Foundry-Weltzeit mitführen** bewegt die Kristall-Uhr Foundrys `game.time` mit. Änderungen anderer Zeitmodule überschreiben Axon´s Calender absichtlich nicht automatisch. So entstehen keine Rückkopplungsschleifen zwischen mehreren Zeitmodulen.
 
 Die Szenenhelligkeit ist standardmäßig ausgeschaltet. Wenn sie aktiviert wird, verwendet jede Tagesphase ihren konfigurierten Dunkelheitswert zwischen 0 und 1 für die aktive Szene.
 

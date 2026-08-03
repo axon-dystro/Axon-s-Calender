@@ -16,7 +16,8 @@ import { getCalendarConfig } from "./settings.js";
 const GM_STORE_FLAG = "gmPlannerStore";
 const GM_EVENTS_FLAG = "gmEvents";
 const PERSONAL_NOTES_FLAG = "personalNotes";
-const GM_JOURNAL_NAME = "[Axons Kalender] Private GM-Planung";
+const GM_JOURNAL_NAME = "[Axon´s Calender] Private GM-Planung";
+const PREVIOUS_GM_JOURNAL_NAME = "[Axons Kalender] Private GM-Planung";
 const LEGACY_GM_JOURNAL_NAME = "[Illidor Calendar] Private GM-Planung";
 const EVENT_STORAGE = Object.freeze({ WORLD: "world", USER: "user", GM: "gm" });
 
@@ -251,7 +252,7 @@ export class CalendarStore {
       }, { renderSheet: false });
     } else {
       const changes = {};
-      if (journal.name === LEGACY_GM_JOURNAL_NAME) changes.name = GM_JOURNAL_NAME;
+      if ([LEGACY_GM_JOURNAL_NAME, PREVIOUS_GM_JOURNAL_NAME].includes(journal.name)) changes.name = GM_JOURNAL_NAME;
       if (game.users.some((user) => user.isGM && journal.ownership[user.id] !== CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER)) changes.ownership = ownership;
       if (Object.keys(changes).length) await journal.update(changes);
     }

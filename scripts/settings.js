@@ -1,5 +1,5 @@
-import { ILLIDOR_PRESET, normalizeCalendarConfig } from "./calendar-config.js";
-import { DATA_VERSION, DEFAULT_STATE, MODULE_ID, PHASES, SETTINGS } from "./constants.js";
+import { ILLIDOR_PRESET, NEUTRAL_PRESET, normalizeCalendarConfig } from "./calendar-config.js";
+import { DATA_VERSION, DEFAULT_STATE, ILLIDOR_DEFAULT_STATE, MODULE_ID, PHASES, SETTINGS } from "./constants.js";
 
 export const WORLD_FEATURE_SETTINGS = Object.freeze([
   SETTINGS.FEATURE_CALENDAR,
@@ -18,14 +18,14 @@ export function registerSettings(CalendarConfigApp) {
 
   game.settings.registerMenu(MODULE_ID, "calendarDesigner", {
     name: "Kalender-Designer",
-    label: "Axons Kalender konfigurieren",
+    label: "Axon´s Calender konfigurieren",
     hint: "Wochentage, Jahreszeiten, Monate, Sondertage, Monde, Tagesphasen und den aktuellen Zeitpunkt ohne Code bearbeiten.",
     icon: "fa-solid fa-wand-magic-sparkles",
     type: CalendarConfigApp,
     restricted: true
   });
 
-  registerBoolean(SETTINGS.WORLD_ENABLED, "Modul weltweit aktiv", "Schaltet Axons Kalender für die gesamte Welt an oder aus.", true, true, refresh);
+  registerBoolean(SETTINGS.WORLD_ENABLED, "Modul weltweit aktiv", "Schaltet Axon´s Calender für die gesamte Welt an oder aus.", true, true, refresh);
   registerBoolean(SETTINGS.CLIENT_ENABLED, "Modul auf diesem Gerät aktiv", "Persönlicher Notfall- und Performance-Schalter für diesen Browser.", true, false, refresh, "client");
   registerBoolean(SETTINGS.FEATURE_CALENDAR, "Kalenderfenster", "Aktiviert Monats-, Jahres- und Agendaansicht.", true, true, refresh);
   registerBoolean(SETTINGS.FEATURE_HUD, "Kristall-Uhr", "Zeigt die verschiebbare Datums- und Tageszeituhr an.", true, true, refresh);
@@ -35,7 +35,7 @@ export function registerSettings(CalendarConfigApp) {
   registerBoolean(SETTINGS.FEATURE_PERSONAL_NOTES, "Private Spielernotizen", "Jeder Spieler kann eigene, nur für ihn sichtbare Notizen anlegen; beim Erstellen kann alternativ öffentlich geteilt werden.", true, true, refresh);
   registerBoolean(SETTINGS.FEATURE_MOON, "Mondsystem", "Berechnet und visualisiert alle im Kalender-Designer angelegten Monde.", true, true, refresh);
   registerBoolean(SETTINGS.FEATURE_SCENE_LIGHTING, "Szenenhelligkeit mitführen", "Passt beim Wechsel der Tagesphase die Dunkelheit der aktuell aktiven Szene an. Standardmäßig aus.", false, true, refresh);
-  registerBoolean(SETTINGS.SYNC_FOUNDRY_TIME, "Foundry-Weltzeit mitführen", "Zeitänderungen über Axons Kalender bewegen auch Foundrys offizielle Weltzeit. Externe Zeitänderungen überschreiben den Kalender nicht.", true, true, refresh);
+  registerBoolean(SETTINGS.SYNC_FOUNDRY_TIME, "Foundry-Weltzeit mitführen", "Zeitänderungen über Axon´s Calender bewegen auch Foundrys offizielle Weltzeit. Externe Zeitänderungen überschreiben den Kalender nicht.", true, true, refresh);
 
   registerBoolean(SETTINGS.SHOW_HUD, "HUD auf diesem Gerät anzeigen", "Persönlicher Schalter für die Kristall-Uhr.", true, false, refresh, "client");
   registerBoolean(SETTINGS.HUD_COLLAPSED, "HUD kompakt starten", "Startet die Uhr auf diesem Gerät in der kleinen Kristallansicht.", false, false, refresh, "client", false);
@@ -50,7 +50,7 @@ export function registerSettings(CalendarConfigApp) {
     config: false,
     restricted: true,
     type: Object,
-    default: structuredClone(ILLIDOR_PRESET),
+    default: structuredClone(NEUTRAL_PRESET),
     onChange: refresh
   });
   game.settings.register(MODULE_ID, SETTINGS.CALENDAR_STATE, {
@@ -121,11 +121,21 @@ export function isFeatureEnabled(settingKey) {
 
 export async function migrateLegacySettings() {
   if (!game.user.isGM) return false;
-  const currentVersion = Number(game.settings.get(MODULE_ID, SETTINGS.DATA_VERSION) ?? 1);
-  if (currentVersion >= DATA_VERSION) return false;
-
   const worldStorage = game.settings.storage?.get?.("world");
   const canInspectStorage = Boolean(worldStorage?.has);
+  const currentVersion = Number(game.settings.get(MODULE_ID, SETTINGS.DATA_VERSION) ?? 1);
+  if (currentVersion >= DATA_VERSION) {
+    const hadPreviousModuleVersion = worldStorage?.has?.(`${MODULE_ID}.${SETTINGS.DATA_VERSION}`);
+    const hasStoredCalendar = worldStorage?.has?.(`${MODULE_ID}.${SETTINGS.CALENDAR_CONFIG}`);
+    if (canInspectStorage && hadPreviousModuleVersion && !hasStoredCalendar) {
+      await game.settings.set(MODULE_ID, SETTINGS.CALENDAR_CONFIG, structuredClone(ILLIDOR_PRESET));
+      await game.settings.set(MODULE_ID, SETTINGS.CALENDAR_STATE, structuredClone(ILLIDOR_DEFAULT_STATE));
+      ui.notifications.info("Axon´s Calender: Das bisherige Illidor-Standardpreset wurde für diese bestehende Welt dauerhaft gesichert.");
+      return true;
+    }
+    return false;
+  }
+
   const legacyKeys = [
     SETTINGS.CALENDAR_STATE,
     SETTINGS.PUBLIC_EVENTS,
@@ -152,7 +162,7 @@ export async function migrateLegacySettings() {
   const legacyNextPhase = String(game.settings.get(MODULE_ID, SETTINGS.LEGACY_NEXT_DAY_PHASE) || PHASES.MORNING);
   config.day.nextDayPhaseId = config.phases.some((phase) => phase.id === legacyNextPhase) ? legacyNextPhase : PHASES.MORNING;
 
-  const state = { ...structuredClone(DEFAULT_STATE), ...(game.settings.get(MODULE_ID, SETTINGS.CALENDAR_STATE) ?? {}) };
+  const state = { ...structuredClone(ILLIDOR_DEFAULT_STATE), ...(game.settings.get(MODULE_ID, SETTINGS.CALENDAR_STATE) ?? {}) };
   if (!Number.isFinite(Number(state.minuteOfDay))) {
     const phase = config.phases.find((candidate) => candidate.id === state.phase) ?? config.phases[0];
     state.minuteOfDay = phase.startMinute;
@@ -161,7 +171,7 @@ export async function migrateLegacySettings() {
   await game.settings.set(MODULE_ID, SETTINGS.CALENDAR_CONFIG, normalizeCalendarConfig(config));
   await game.settings.set(MODULE_ID, SETTINGS.CALENDAR_STATE, state);
   await game.settings.set(MODULE_ID, SETTINGS.DATA_VERSION, DATA_VERSION);
-  ui.notifications.info("Axons Kalender: Der bisherige Illidor-Kalender wurde sicher auf das neue, frei konfigurierbare Format migriert.");
+  ui.notifications.info("Axon´s Calender: Der bisherige Illidor-Kalender wurde sicher auf das neue, frei konfigurierbare Format migriert.");
   return true;
 }
 
