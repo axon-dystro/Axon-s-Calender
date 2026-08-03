@@ -1,0 +1,114 @@
+<div class="ac-calendar-shell {{#if showMoonBackground}}has-moon-background{{/if}}" style="--season-color: {{seasonColor}}">
+  <header class="ac-calendar-header">
+    <div class="ac-aurora" aria-hidden="true"></div>
+    {{#if showMoonBackground}}
+      <div class="ac-moon-watermark" aria-hidden="true" style="--moon-color: {{backgroundMoon.color}}; --moon-phase: {{backgroundMoon.fraction}}">{{backgroundMoon.icon}}</div>
+    {{/if}}
+    <div class="ac-brand-line">
+      <div><span class="ac-brand-gem">A</span><div><strong>{{calendarName}}</strong><small>AXONS CALENDAR ENGINE</small></div></div>
+      <div class="ac-current-time"><span style="--phase-color: {{currentPhase.color}}">{{currentPhase.icon}}</span><div><strong>{{currentTime}}</strong><small>{{currentPhase.name}}</small></div></div>
+      {{#if isGM}}<button type="button" class="ac-icon-button" data-action="configure" title="Kalender-Designer öffnen"><i class="fa-solid fa-wand-magic-sparkles"></i></button>{{/if}}
+    </div>
+
+    <div class="ac-current-strip"><span>JETZT</span><strong>{{currentLabel}}</strong></div>
+
+    <div class="ac-period-controls">
+      <button type="button" data-action="previous-period" title="Zurück"><i class="fa-solid fa-chevron-left"></i></button>
+      <div><h1>{{#if yearView}}{{yearHeader}}{{else}}{{header}}{{/if}}</h1><button type="button" class="ac-link-button" data-action="today"><i class="fa-solid fa-location-crosshairs"></i> Zum aktuellen Spieltag</button></div>
+      <button type="button" data-action="next-period" title="Weiter"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+
+    <div class="ac-view-bars">
+      <nav class="ac-display-toggle" aria-label="Darstellung">
+        <button type="button" data-display-mode="month" class="{{#if monthView}}active{{/if}}"><i class="fa-regular fa-calendar"></i> Monat</button>
+        <button type="button" data-display-mode="year" class="{{#if yearView}}active{{/if}}"><i class="fa-solid fa-table-cells-large"></i> Jahr</button>
+        <button type="button" data-display-mode="agenda" class="{{#if agendaView}}active{{/if}}"><i class="fa-solid fa-list-ul"></i> Agenda</button>
+      </nav>
+      {{#if isGM}}
+        <nav class="ac-view-toggle" aria-label="Sichtbarkeit">
+          <button type="button" data-action="player-view" class="{{#if playerViewActive}}active{{/if}}"><i class="fa-solid fa-users"></i> Spieler</button>
+          <button type="button" data-action="gm-view" class="{{#if gmViewActive}}active{{/if}}"><i class="fa-solid fa-user-secret"></i> GM</button>
+        </nav>
+      {{/if}}
+    </div>
+  </header>
+
+  <main class="ac-calendar-content">
+    <section class="ac-calendar-board">
+      {{#if monthView}}
+        {{#if viewingSpecial}}
+          <article class="ac-special-day-card" data-date-key="{{selectedDateKey}}">
+            <div class="ac-special-rings"><span></span><span></span><div>✦</div></div>
+            <span class="ac-eyebrow">AUSSERHALB DES MONATS</span>
+            <h2>{{header}}</h2><p>{{specialDescription}}</p><strong>Kein regulärer Wochentag</strong>
+          </article>
+        {{else}}
+          <div class="ac-weekday-row" style="--weekday-count: {{config.weekdays.length}}">{{#each weekdays}}<div>{{this}}</div>{{/each}}</div>
+          <div class="ac-day-grid" style="--weekday-count: {{config.weekdays.length}}">
+            {{#each cells}}
+              {{#if blank}}<div class="ac-day-cell is-blank" aria-hidden="true"></div>
+              {{else}}
+                <button type="button" class="ac-day-cell {{#if isCurrent}}is-current{{/if}} {{#if isSelected}}is-selected{{/if}}" data-date-key="{{dateKey}}">
+                  <span class="ac-day-top"><strong>{{day}}</strong><small>{{weekday}}</small><span class="ac-cell-moons">{{#each moons}}<i title="{{name}} · {{label}}">{{icon}}</i>{{/each}}</span></span>
+                  {{#if isMoonTurn}}<span class="ac-moon-turn"><i class="fa-solid fa-moon"></i> Mondwende</span>{{/if}}
+                  <span class="ac-cell-events">
+                    {{#each events}}<span class="ac-event-chip {{cssClass}}" data-event-id="{{id}}" data-visibility="{{visibility}}" title="{{title}}">{{title}}</span>{{/each}}
+                    {{#if overflow}}<span class="ac-event-overflow">+{{overflow}} weitere</span>{{/if}}
+                  </span>
+                </button>
+              {{/if}}
+            {{/each}}
+          </div>
+        {{/if}}
+      {{/if}}
+
+      {{#if yearView}}
+        <div class="ac-year-grid">
+          {{#each year}}
+            <article class="ac-year-season" style="--season-color: {{color}}">
+              <header><span>{{number}}</span><h2>{{name}}</h2></header>
+              <div class="ac-year-months">
+                {{#each months}}
+                  <button type="button" data-date-key="{{dateKey}}" data-open-month="true" class="{{#if current}}is-current{{/if}}"><span>M{{number}}</span><strong>{{name}}</strong><small>{{days}} Tage{{#if eventCount}} · {{eventCount}} Einträge{{/if}}</small></button>
+                {{/each}}
+                {{#if special}}<button type="button" data-date-key="{{special.dateKey}}" data-open-month="true" class="ac-year-special {{#if special.current}}is-current{{/if}}"><span>✦</span><strong>{{special.name}}</strong><small>Sondertag</small></button>{{/if}}
+              </div>
+            </article>
+          {{/each}}
+        </div>
+      {{/if}}
+
+      {{#if agendaView}}
+        <div class="ac-agenda-list">
+          {{#each agenda}}
+            <article class="ac-agenda-event {{cssClass}}" data-event-id="{{id}}" data-visibility="{{visibility}}">
+              <button type="button" data-agenda-date="{{dateKey}}"><i class="fa-regular fa-calendar"></i><span>{{startLabel}}{{#if endLabel}} → {{endLabel}}{{/if}}</span></button>
+              <div><span class="ac-visibility-badge">{{visibilityLabel}}</span><h3>{{title}}</h3>{{#if description}}<p>{{description}}</p>{{/if}}</div>
+            </article>
+          {{else}}<div class="ac-empty-state"><i class="fa-regular fa-calendar-xmark"></i><p>In dieser Ansicht gibt es noch keine Einträge.</p></div>{{/each}}
+        </div>
+      {{/if}}
+    </section>
+
+    <aside class="ac-day-panel">
+      <div class="ac-day-panel-heading"><div><small>AUSGEWÄHLTER TAG</small><h2>{{selectedLabel}}</h2></div></div>
+      {{#if selectedMoons.length}}
+        <div class="ac-selected-moons">
+          {{#each selectedMoons}}<div style="--moon-color: {{color}}"><span>{{icon}}</span><div><strong>{{name}}</strong><small>{{label}} · {{illuminationLabel}}</small></div></div>{{/each}}
+        </div>
+      {{/if}}
+      <div class="ac-day-actions">
+        {{#if canAdd}}<button type="button" data-action="add-event"><i class="fa-solid fa-plus"></i> Eintrag hinzufügen</button>{{/if}}
+        {{#if canSetCurrent}}<button type="button" class="secondary" data-action="set-current"><i class="fa-solid fa-location-dot"></i> Als aktuellen Tag setzen</button>{{/if}}
+      </div>
+      <div class="ac-event-list">
+        {{#each selectedEvents}}
+          <article class="ac-event-card {{cssClass}}" data-event-id="{{id}}" data-visibility="{{visibility}}">
+            <header><div><span class="ac-visibility-badge">{{visibilityLabel}} · {{ownerName}}</span><h3>{{title}}</h3></div>{{#if canPublish}}<button type="button" data-publish-id="{{id}}" title="Veröffentlichen"><i class="fa-solid fa-bullhorn"></i></button>{{/if}}</header>
+            {{#if description}}<p>{{description}}</p>{{/if}}
+          </article>
+        {{else}}<p class="ac-empty-note">Für diesen Tag gibt es in dieser Ansicht noch keine Einträge.</p>{{/each}}
+      </div>
+    </aside>
+  </main>
+</div>

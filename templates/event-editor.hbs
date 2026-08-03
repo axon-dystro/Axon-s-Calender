@@ -1,0 +1,48 @@
+<form class="ac-event-form">
+  <header class="ac-event-hero"><span class="ac-event-gem"><i class="fa-solid fa-sparkles"></i></span><div><small>AXONS KALENDER</small><h1>{{#if isEditing}}Eintrag bearbeiten{{else}}Neuer Kalendereintrag{{/if}}</h1><p>{{startLabel}}</p></div></header>
+  <div class="ac-form-grid">
+    <label class="span-2"><span>Titel</span><input type="text" name="title" value="{{event.title}}" maxlength="160" required autofocus placeholder="Was geschieht?"></label>
+    <label><span>Kategorie</span><select name="category">{{#each categories}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+    {{#if canChooseVisibility}}
+      <label><span>Sichtbarkeit</span><select name="visibility">{{#each visibilityOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+    {{else}}
+      <input type="hidden" name="visibility" value="{{fixedVisibility.value}}"><label><span>Sichtbarkeit</span><input value="{{fixedVisibility.label}}" disabled></label>
+    {{/if}}
+    <label class="span-2"><span>Beschreibung</span><textarea name="description" rows="6" maxlength="10000" placeholder="Details, Erinnerungen oder geheime Planung …">{{event.description}}</textarea></label>
+  </div>
+
+  <div class="ac-date-sections">
+    <fieldset>
+      <legend><i class="fa-solid fa-play"></i> Start</legend>
+      <div class="ac-date-row">
+        <label><span>Art</span><select name="startKind"><option value="regular" {{#if start.isRegular}}selected{{/if}}>Normaler Tag</option><option value="special" {{#if start.isSpecial}}selected{{/if}}>Sondertag</option></select></label>
+        <label><span>Jahr</span><input type="number" name="startYear" value="{{start.year}}" step="1" required></label>
+        <label><span>Jahreszeit</span><select name="startSeason">{{#each start.seasons}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select></label>
+        <div class="ac-regular-date-fields" data-regular-fields="start">
+          <label><span>Monat</span><select name="startMonth">{{#each start.months}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select></label>
+          <label><span>Tag</span><select name="startDay">{{#each start.days}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}}</option>{{/each}}</select></label>
+        </div>
+      </div>
+      <p class="ac-special-help is-hidden" data-special-help="start">Der Sondertag der gewählten Jahreszeit wird verwendet.</p>
+    </fieldset>
+    <fieldset>
+      <legend><i class="fa-solid fa-flag-checkered"></i> Ende</legend>
+      <div class="ac-date-row">
+        <label><span>Art</span><select name="endKind"><option value="regular" {{#if end.isRegular}}selected{{/if}}>Normaler Tag</option><option value="special" {{#if end.isSpecial}}selected{{/if}}>Sondertag</option></select></label>
+        <label><span>Jahr</span><input type="number" name="endYear" value="{{end.year}}" step="1" required></label>
+        <label><span>Jahreszeit</span><select name="endSeason">{{#each end.seasons}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select></label>
+        <div class="ac-regular-date-fields" data-regular-fields="end">
+          <label><span>Monat</span><select name="endMonth">{{#each end.months}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select></label>
+          <label><span>Tag</span><select name="endDay">{{#each end.days}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}}</option>{{/each}}</select></label>
+        </div>
+      </div>
+      <p class="ac-special-help is-hidden" data-special-help="end">Der Sondertag der gewählten Jahreszeit wird verwendet.</p>
+    </fieldset>
+  </div>
+
+  <footer class="ac-form-actions">
+    {{#if canDelete}}<button type="button" class="danger" data-action="delete"><i class="fa-solid fa-trash"></i> Löschen</button>{{/if}}
+    {{#if canPublish}}<button type="button" data-action="publish"><i class="fa-solid fa-bullhorn"></i> Veröffentlichen</button>{{/if}}
+    <span class="spacer"></span><button type="button" class="secondary" data-action="cancel">Abbrechen</button><button type="submit" class="primary"><i class="fa-solid fa-floppy-disk"></i> Speichern</button>
+  </footer>
+</form>
