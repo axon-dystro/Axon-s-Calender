@@ -33,7 +33,7 @@ export class CalendarApp extends HandlebarsApplicationMixin(ApplicationV2) {
     window: { title: "Axon´s Calender", icon: "fa-solid fa-gem", resizable: true },
     position: { width: 1160, height: 790 }
   };
-
+//test
   static PARTS = {
     main: { template: `modules/${MODULE_ID}/templates/calendar.hbs` }
   };
