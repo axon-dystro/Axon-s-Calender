@@ -16,8 +16,12 @@ export function normalizeDate(date, calendar = NEUTRAL_PRESET) {
   value.year = Number.isFinite(value.year) ? Math.trunc(value.year) : 1;
   value.season = clampInt(value.season, 1, config.seasons.length);
   const season = config.seasons[value.season - 1];
+  if (value.specialDay < 0 && config.specialDays.find(s=>s.slot === -value.specialDay)) {
+    const special = config.specialDays.find(s=>s.slot === -value.specialDay);
+    return { year: value.year, season: special.season, month: null, day: null, specialDay: value.specialDay };
+  }
 
-  if (value.specialDay != null && season.specialDay.enabled) {
+  if (value.specialDay > 0 && season.specialDay.enabled) {
     value.specialDay = value.season;
     value.month = null;
     value.day = null;
@@ -31,12 +35,12 @@ export function normalizeDate(date, calendar = NEUTRAL_PRESET) {
 }
 
 export function isSpecialDate(date) {
-  return Number.isInteger(Number(date?.specialDay)) && Number(date.specialDay) >= 1;
+  return Number.isInteger(Number(date?.specialDay)) && Number(date.specialDay) !== 0;
 }
 
 export function daysInYear(calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
-  return config.seasons.reduce((total, season) => total + daysInSeason(season), 0);
+  return config.seasons.reduce((total, season) => total + daysInSeason(season), 0) + config.specialDays.length;
 }
 
 export function regularDaysInYear(calendar = NEUTRAL_PRESET) {
@@ -71,6 +75,12 @@ export function weekdayIndex(date, calendar = NEUTRAL_PRESET) {
       + (config.week.specialDaysAdvance ? config.seasons.filter((season) => season.specialDay.enabled).length : 0);
     index += value.year * weekdayDaysPerYear;
   }
+  if (config.week.specialDaysAdvance) {
+    const ordinal = dateToOrdinal(value, config);
+    index += config.specialDays.filter((special, i) => (config.week.reset !== "season" || special.season === value.season)
+      && dateToOrdinal({ year: value.year, specialDay: -special.slot }, config) < ordinal).length;
+    if (config.week.reset === "never") index += value.year * config.specialDays.length;
+  }
   return positiveMod(index, config.weekdays.length);
 }
 
@@ -83,13 +93,15 @@ export function weekdayName(date, calendar = NEUTRAL_PRESET) {
 export function dateToOrdinal(date, calendar = NEUTRAL_PRESET) {
   const config = normalizeCalendarConfig(calendar);
   const value = normalizeDate(date, config);
-  let ordinal = value.year * daysInYear(config);
+  const extras = extraPositions(config);
+  if (value.specialDay < 0) return value.year * daysInYear(config) + extras.find(e => config.specialDays[e.index].slot === -value.specialDay).position;
+  let ordinal = 0;
   for (let seasonIndex = 0; seasonIndex < value.season - 1; seasonIndex += 1) {
     ordinal += daysInSeason(config.seasons[seasonIndex]);
   }
   const season = config.seasons[value.season - 1];
-  if (isSpecialDate(value)) return ordinal + regularDaysInSeason(season);
-  return ordinal + regularDaysBeforeMonth(season, value.month) + value.day - 1;
+  ordinal += isSpecialDate(value) ? regularDaysInSeason(season) : regularDaysBeforeMonth(season, value.month) + value.day - 1;
+  return value.year * daysInYear(config) + ordinal + extras.filter(e => e.base <= ordinal).length;
 }
 
 export function ordinalToDate(ordinal, calendar = NEUTRAL_PRESET) {
@@ -98,6 +110,10 @@ export function ordinalToDate(ordinal, calendar = NEUTRAL_PRESET) {
   let year = Math.floor(Number(ordinal) / yearLength);
   let remaining = positiveMod(Math.trunc(Number(ordinal)), yearLength);
 
+  const extras = extraPositions(config);
+  const extra = extras.find(e => e.position === remaining);
+  if (extra) return { year, season: config.specialDays[extra.index].season, month: null, day: null, specialDay: -config.specialDays[extra.index].slot };
+  remaining -= extras.filter(e => e.position < remaining).length;
   for (let seasonIndex = 0; seasonIndex < config.seasons.length; seasonIndex += 1) {
     const season = config.seasons[seasonIndex];
     const seasonLength = daysInSeason(season);
@@ -206,7 +222,7 @@ export function moonState(date, calendar = NEUTRAL_PRESET, moonDefinition = null
   const season = config.seasons[value.season - 1];
 
   if (isSpecialDate(value) && moon.fullOnSpecialDays) {
-    const alwaysVisible = Boolean(season.specialDay.outsideYear && moon.alwaysVisibleOnOutsideYear);
+    const alwaysVisible = Boolean(specialDefinition(value, config).outsideYear && moon.alwaysVisibleOnOutsideYear);
     return {
       id: moon.id,
       name: moon.name,
@@ -257,8 +273,9 @@ export function formatDate(date, calendar = NEUTRAL_PRESET, { compact = false } 
   const era = config.eraLabel ? ` ${config.eraLabel}` : "";
 
   if (isSpecialDate(value)) {
-    const yearPart = season.specialDay.outsideYear ? "zwischen den Jahren" : `${value.year}${era}`;
-    return compact ? `${season.specialDay.name} · ${yearPart}` : `${season.specialDay.name} · ${season.name} · ${yearPart}`;
+    const special = specialDefinition(value, config);
+    const yearPart = special.outsideYear ? "zwischen den Jahren" : `${value.year}${era}`;
+    return compact ? `${special.name} · ${yearPart}` : `${special.name} · ${season.name} · ${yearPart}`;
   }
 
   const month = season.months[value.month - 1];
@@ -271,11 +288,7 @@ export function periodLabel(date, calendar = NEUTRAL_PRESET) {
   const value = normalizeDate(date, config);
   const season = config.seasons[value.season - 1];
   const era = config.eraLabel ? ` ${config.eraLabel}` : "";
-  if (isSpecialDate(value)) {
-    return season.specialDay.outsideYear
-      ? `${season.specialDay.name} · zwischen den Jahren`
-      : `${season.specialDay.name} · nach ${season.name} · ${value.year}${era}`;
-  }
+  if (isSpecialDate(value)) return formatDate(value, config, { compact: true });
   return `${season.name} · ${season.months[value.month - 1].name} · ${value.year}${era}`;
 }
 
@@ -341,4 +354,49 @@ function positiveMod(value, divisor) {
 function clampInt(value, minimum, maximum) {
   const number = Number.isFinite(Number(value)) ? Math.trunc(Number(value)) : minimum;
   return Math.min(maximum, Math.max(minimum, number));
+}
+
+// Insertions are anchored to a regular month/day, so old regular event dates retain their meaning.
+function extraPositions(config) {
+  const entries = config.specialDays.map((special, index) => ({ index, base:
+    config.seasons.slice(0, special.season-1).reduce((n,s)=>n+daysInSeason(s),0)
+    + regularDaysBeforeMonth(config.seasons[special.season-1], special.month) + special.afterDay
+  })).sort((a,b)=>a.base-b.base || a.index-b.index);
+  return entries.map((entry,i)=>({ ...entry, position: entry.base+i }));
+}
+export function specialDefinition(date, config) {
+  return date.specialDay < 0 ? config.specialDays.find(s=>s.slot === -date.specialDay) : config.seasons[date.season-1].specialDay;
+}
+export function seasonsOn(date, calendar) {
+  const config = normalizeCalendarConfig(calendar);
+  if (!config.seasonRanges.length) return [config.seasons[normalizeDate(date,config).season-1]];
+  const day = positiveMod(dateToOrdinal(date,config),daysInYear(config))+1;
+  return config.seasonRanges.filter(s=>s.startDay<=s.endDay ? day>=s.startDay && day<=s.endDay : day>=s.startDay || day<=s.endDay);
+}
+export function solarPhase(state, calendar) {
+  const config = normalizeCalendarConfig(calendar);
+  const minute = normalizeMinute(state.minuteOfDay, config);
+  if (config.sun.mode === "cycle" && config.sun.phases.length) {
+    // Epoch is the first day of year 1, including an insertion before its first regular day.
+    const position = positiveMod(absoluteMinute(state,config)-daysInYear(config)*minutesPerDay(config)-config.sun.offsetMinutes,
+      config.sun.cycleDays*minutesPerDay(config));
+    return config.sun.phases.filter(p=>p.startMinute<=position).at(-1) ?? config.sun.phases.at(-1);
+  }
+  if (config.sun.mode === "rules") {
+    const date = normalizeDate(state,config);
+    const matches = config.sun.rules.filter(rule=> {
+      if (rule.kind === "weekday") return weekdayIndex(date,config) === Number(rule.match)-1;
+      if (rule.kind === "month") return config.seasons[date.season-1].months[(date.month??0)-1]?.id === rule.match;
+      if (rule.kind === "season") return seasonsOn(date,config).some(s=>s.id===rule.match);
+      return dateKey(date,config) === rule.match;
+    }).sort((a,b)=>["season","month","weekday","date"].indexOf(a.kind)-["season","month","weekday","date"].indexOf(b.kind));
+    const rule = matches.at(-1);
+    if (rule) {
+      const light = rule.sunrise === rule.sunset ? false : rule.sunrise < rule.sunset
+        ? minute>=rule.sunrise && minute<rule.sunset : minute>=rule.sunrise || minute<rule.sunset;
+      return { id: light ? "sun-day" : "sun-night", name: light ? "Tag" : "Nacht", icon: light ? "☀️" : "🌙",
+        color: light ? rule.color : config.phases.at(-1).color, darkness: light ? 0 : 1 };
+    }
+  }
+  return phaseForMinute(minute,config);
 }

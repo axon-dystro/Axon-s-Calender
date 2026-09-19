@@ -1,10 +1,11 @@
+import { normalizeExtensions } from "./world-rules.js";
 import { PHASES } from "./constants.js";
 import { DEFAULT_THEME, normalizeTheme } from "./theme.js";
 
 const ILLIDOR_WEEKDAYS = ["Osda", "Desda", "Troda", "Alda", "Miéda", "Silda", "Tokda", "Suda"];
 
 export const ILLIDOR_PRESET = deepFreeze({
-  schemaVersion: 3,
+  schemaVersion: 4,
   id: "illidor",
   name: "Illidor",
   description: "Axons ursprünglicher Kalender: sechs Jahreszeiten, acht Wochentage und ein Sondertag nach jeder Jahreszeit.",
@@ -65,7 +66,7 @@ export const ILLIDOR_PRESET = deepFreeze({
 });
 
 export const NEUTRAL_PRESET = deepFreeze({
-  schemaVersion: 3,
+  schemaVersion: 4,
   id: "custom-calendar",
   name: "Mein Kalender",
   description: "Ein eigener, frei konfigurierbarer Kampagnenkalender.",
@@ -112,7 +113,7 @@ export function createBlankPreset() {
 
 export function normalizeCalendarConfig(input = NEUTRAL_PRESET) {
   const source = input && typeof input === "object" ? input : {};
-  const weekdays = normalizeNames(source.weekdays, NEUTRAL_PRESET.weekdays, 1, 14);
+  const weekdays = normalizeNames(source.weekdays, NEUTRAL_PRESET.weekdays, 1, 60);
   const seasonsSource = Array.isArray(source.seasons) && source.seasons.length ? source.seasons.slice(0, 24) : NEUTRAL_PRESET.seasons;
   const seasons = seasonsSource.map((season, seasonIndex) => normalizeSeason(season, seasonIndex));
   const hours = clampInt(source.day?.hours, 1, 100, 24);
@@ -123,7 +124,8 @@ export function normalizeCalendarConfig(input = NEUTRAL_PRESET) {
   const requestedNextPhase = safeId(source.day?.nextDayPhaseId, phases[0].id);
 
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
+    ...normalizeExtensions(source, seasons, minutesPerDay),
     id: safeId(source.id, "custom"),
     name: safeText(source.name, "Meine Welt", 80),
     description: safeText(source.description, "", 500),
@@ -182,6 +184,7 @@ function normalizeSeason(source, seasonIndex) {
     months: monthsSource.map((month, monthIndex) => ({
       id: safeId(month?.id, `${seasonId}-month-${monthIndex + 1}`),
       name: safeText(month?.name, `Monat ${monthIndex + 1}`, 80),
+      color: safeColor(month?.color, "#a765ff"),
       days: clampInt(month?.days, 1, 999, 28)
     })),
     specialDay: {

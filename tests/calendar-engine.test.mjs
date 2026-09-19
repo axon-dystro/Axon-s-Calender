@@ -114,9 +114,12 @@ test("Designfarben werden übernommen und ungültige Farben abgefangen", () => {
     ...structuredClone(NEUTRAL_PRESET),
     theme: { primary: "#12abef", secondary: "#fedcba" }
   });
-  assert.deepEqual(custom.theme, { primary: "#12abef", secondary: "#fedcba" });
+  assert.equal(custom.theme.primary,"#12abef");
+  assert.equal(custom.theme.secondary,"#fedcba");
+  assert.equal(custom.theme.background,"#171326");
   const safe = normalizeCalendarConfig({ ...structuredClone(NEUTRAL_PRESET), theme: { primary: "red", secondary: "" } });
-  assert.deepEqual(safe.theme, { primary: "#f06bc7", secondary: "#a765ff" });
+  assert.equal(safe.theme.primary,"#f06bc7");
+  assert.equal(safe.theme.secondary,"#a765ff");
 });
 
 test("beschädigte Importwerte werden auf sichere Grenzen normalisiert", () => {

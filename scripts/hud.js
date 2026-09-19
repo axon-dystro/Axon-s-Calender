@@ -1,5 +1,6 @@
+import { canView } from "./world-rules.js";
 import { MODULE_ID, SETTINGS } from "./constants.js";
-import { formatDate, formatTime, moonStates, phaseForMinute } from "./calendar-engine.js";
+import { formatDate, formatTime, moonStates, phaseForMinute, solarPhase } from "./calendar-engine.js";
 import { CalendarApp } from "./calendar-app.js";
 import { getCalendarConfig, isFeatureEnabled, isModuleUsable } from "./settings.js";
 import { CalendarStore } from "./store.js";
@@ -36,7 +37,7 @@ export class CalendarHud {
     if (!this.element) return;
     const state = CalendarStore.getState();
     const config = getCalendarConfig();
-    const phase = phaseForMinute(state.minuteOfDay, config);
+    const phase = canView(config,"sun",game.user) ? solarPhase(state,config) : {id:"hidden",name:"",icon:"◉",color:config.theme.primary};
     const moonEnabled = isFeatureEnabled(SETTINGS.FEATURE_MOON)
       && game.settings.get(MODULE_ID, SETTINGS.SHOW_MOON_VISUALS);
     const moons = moonEnabled ? moonStates(state, config) : [];

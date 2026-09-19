@@ -1,3 +1,16 @@
+## 1.3.0-beta.1 – Flexible Weltregeln
+
+- Eigenständige Sondertage mit stabilen Datumskennungen und freier Position.
+- Jahreszeitbereiche unabhängig von Monatsgruppen, auch über den Jahreswechsel.
+- Tägliche und datumsabhängige Sonnenzeiten sowie mehrtägige Sonnenphasen.
+- Haupt-GM-Timer mit Geschwindigkeit, Endpunkt und Spielpause.
+- Kategorien, verbindliche/freie/Paletten-Eintragsfarben und zusätzliche Theme-Farben.
+- Freigaben je Regelbereich; geprüfte Spieleranfragen und geschützte GM-Konfiguration.
+- Alte reguläre Daten, Kategorien und Illidor-Sondertagskennungen bleiben lesbar.
+- Automatisierte Regeln-/Berechtigungstests und reproduzierbare Release-Verpackung.
+
+Beta: echte Foundry-14-Mehrbenutzerprüfung steht aus. Kein automatischer Release.
+
 # Changelog
 
 ## 1.1.0 – 2026-08-03 · erste öffentliche Ausgabe

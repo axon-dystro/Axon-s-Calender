@@ -1,0 +1,20 @@
+<form class="ac-config-shell ac-world-rules">
+  <header class="ac-config-hero"><div><h1>Weltregeln</h1><p>Kalender, Sonnenzyklus, Farben und Freigaben deiner Spielwelt.</p></div></header>
+  <main class="ac-config-body">
+    {{#if canTimer}}<div class="ac-rules-toolbar"><button type="button" data-clock-start>▶ Tages-Timer starten</button><button type="button" data-clock-stop>■ Timer stoppen</button>{{#if running}}<strong>Timer läuft</strong>{{/if}}</div>{{/if}}
+    {{#if canTheme}}<div class="ac-rules-toolbar"><span>Theme-Vorlage:</span>{{#each themes}}<button type="button" data-theme="{{id}}">{{name}}</button>{{/each}}</div>{{/if}}
+    {{#each sections}}
+      <details class="ac-rules-section" open>
+        <summary>{{title}}{{#if disabled}} · schreibgeschützt{{/if}}</summary><p>{{hint}}</p>
+        {{#each rows}}<fieldset data-rule-row><legend>{{name}}</legend><div class="ac-rules-fields">
+          {{#each fields}}<label><span>{{label}}</span>
+            {{#if isSelect}}<select name="{{name}}" {{#if disabled}}disabled{{/if}}>{{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+            {{else}}<input type="{{type}}" name="{{name}}" {{#unless checkbox}}value="{{value}}"{{/unless}} {{#if checkbox}}{{#if value}}checked{{/if}}{{/if}} {{#if disabled}}disabled{{/if}} {{#if min includeZero=true}}min="{{min}}"{{/if}} {{#if max}}max="{{max}}"{{/if}} step="{{#if step}}{{step}}{{else}}1{{/if}}">{{/if}}
+          </label>{{/each}}
+        </div>{{#if canRemove}}<button type="button" data-remove="{{../key}}" data-index="{{index}}">Eintrag entfernen</button>{{/if}}</fieldset>{{/each}}
+        {{#if canAdd}}<button type="button" data-add="{{key}}">+ Hinzufügen</button>{{/if}}
+      </details>
+    {{/each}}
+  </main>
+  <footer class="ac-config-footer"><span>{{#if isGM}}Weltweite Regeln{{else}}Freigegebene Änderungen benötigen einen verbundenen Haupt-GM.{{/if}}</span><button type="submit" class="primary">Speichern</button></footer>
+</form>

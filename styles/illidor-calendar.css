@@ -579,3 +579,44 @@
   .ac-regular-date-fields { grid-column: 1 / -1; }
   .ac-agenda-event { grid-template-columns: 1fr; }
 }
+
+/* Configurable world palette. */
+:root {
+  --ac-background: #171326;
+  --ac-surface: #241d38;
+  --ac-border: #65517e;
+  --ac-ink: var(--ac-background);
+  --ac-night: var(--ac-surface);
+  --ac-muted: color-mix(in srgb, var(--ac-text) 70%, var(--ac-background));
+  --ac-line: color-mix(in srgb, var(--ac-border) 65%, transparent);
+}
+.ac-calendar-shell, .ac-config-shell { background: var(--ac-background); }
+.ac-calendar-header, .ac-config-hero, .ac-config-footer, .ac-day-panel,
+.axon-calendar-hud, .ac-time-popover { background: var(--ac-surface); }
+.axon-calendar-config input, .axon-calendar-config select, .axon-calendar-config textarea,
+.axon-event-editor input, .axon-event-editor select, .axon-event-editor textarea {
+  color:var(--ac-text);background:var(--ac-surface);
+}
+.axon-calendar-config select option, .axon-event-editor select option { color:var(--ac-text);background:var(--ac-surface); }
+.ac-current-strip strong, .ac-config-shell h1, .ac-calendar-shell h1, .ac-calendar-shell h2 { color:var(--ac-text); }
+.ac-day-top > strong { color:var(--day-color,var(--ac-text)); }
+.ac-weekday-row > div { color:var(--week-color,var(--ac-text)); }
+.ac-inserted-day { grid-column:1/-1; min-height:65px; border-left:4px solid var(--day-color); }
+.ac-special-strip, .ac-rules-toolbar { display:flex;flex-wrap:wrap;gap:8px;padding:10px 0; }
+.ac-special-strip:empty { display:none; }
+.ac-special-strip button { width:auto; }
+.ac-rules-section { border:1px solid var(--ac-border);border-radius:10px;padding:16px;margin-bottom:14px; }
+.ac-rules-section summary { font-size:18px;font-weight:700;cursor:pointer; }
+.ac-rules-section p { font-size:13px;line-height:1.55;color:var(--ac-muted); }
+.ac-rules-section fieldset { min-width:0;border:1px solid var(--ac-line);padding:12px;margin:12px 0; }
+.ac-rules-fields { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px; }
+.ac-rules-fields label { display:flex;flex-direction:column;gap:6px;min-width:0; }
+.ac-rules-fields input,.ac-rules-fields select { width:100%;min-width:0;min-height:32px;font-size:13px; }
+.ac-rules-fields input[type=checkbox] { width:22px; }
+.ac-world-rules .ac-config-body { padding:20px; }
+.ac-world-rules button { width:auto; }
+.ac-month-row { grid-template-columns:30px 1fr 42px 120px 30px; }
+.ac-event-chip,.ac-agenda-event,.ac-event-card { border-left:4px solid var(--event-color,var(--ac-primary)); }
+.ac-event-chip { background:color-mix(in srgb,var(--event-color,var(--ac-primary)) 24%,var(--ac-surface));color:var(--ac-text); }
+.ac-day-panel-heading small { display:block;overflow-wrap:anywhere;margin-top:6px; }
+@media(max-width:700px) { .ac-rules-fields { grid-template-columns:1fr; } }

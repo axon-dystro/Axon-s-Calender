@@ -8,6 +8,10 @@
     {{else}}
       <input type="hidden" name="visibility" value="{{fixedVisibility.value}}"><label><span>Sichtbarkeit</span><input value="{{fixedVisibility.label}}" disabled></label>
     {{/if}}
+    {{#if canChooseColor}}<label><span>Eintragsfarbe (verbindliche Kategorie hat Vorrang)</span>
+      {{#if paletteMode}}<select name="color">{{#each palette}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}}</option>{{/each}}</select>
+      {{else}}<input type="color" name="color" value="{{eventColor}}">{{/if}}
+    </label>{{else}}<label><span>Eintragsfarbe durch GM-Regel</span><input type="color" value="{{eventColor}}" disabled></label>{{/if}}
     <label class="span-2"><span>Beschreibung</span><textarea name="description" rows="6" maxlength="10000" placeholder="Details, Erinnerungen oder geheime Planung …">{{event.description}}</textarea></label>
   </div>
 
@@ -23,7 +27,7 @@
           <label><span>Tag</span><select name="startDay">{{#each start.days}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}}</option>{{/each}}</select></label>
         </div>
       </div>
-      <p class="ac-special-help is-hidden" data-special-help="start">Der Sondertag der gewählten Jahreszeit wird verwendet.</p>
+      <label class="ac-special-help is-hidden" data-special-help="start"><span>Sondertag</span><select name="startSpecial">{{#each start.specials}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select></label>
     </fieldset>
     <fieldset>
       <legend><i class="fa-solid fa-flag-checkered"></i> Ende</legend>
@@ -36,7 +40,7 @@
           <label><span>Tag</span><select name="endDay">{{#each end.days}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}}</option>{{/each}}</select></label>
         </div>
       </div>
-      <p class="ac-special-help is-hidden" data-special-help="end">Der Sondertag der gewählten Jahreszeit wird verwendet.</p>
+      <label class="ac-special-help is-hidden" data-special-help="end"><span>Sondertag</span><select name="endSpecial">{{#each end.specials}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select></label>
     </fieldset>
   </div>
 

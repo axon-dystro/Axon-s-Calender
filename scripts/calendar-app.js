@@ -1,6 +1,10 @@
+import { WorldRulesApp } from "./rules-app.js";
+import { canChange, canView, eventColor } from "./world-rules.js";
 import { AUTHOR_LINKS, MODULE_ID, SETTINGS, VISIBILITY } from "./constants.js";
 import {
   dateKey,
+  specialDefinition,
+  seasonsOn,
   dateToOrdinal,
   eventOccursOn,
   formatDate,
@@ -11,6 +15,7 @@ import {
   parseDateKey,
   periodLabel,
   phaseForMinute,
+  solarPhase,
   sameDate,
   shiftPeriod,
   weekdayIndex,
@@ -73,7 +78,7 @@ export class CalendarApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.selectedDate = normalizeDate(this.selectedDate, config);
     const events = await CalendarStore.getVisibleEvents(this.viewMode);
     const selected = this.selectedDate;
-    const phase = phaseForMinute(current.minuteOfDay, config);
+    const phase = canView(config,"sun",game.user) ? solarPhase(current,config) : {id:"hidden",name:"",icon:"◉",color:config.theme.primary};
     const moonEnabled = isFeatureEnabled(SETTINGS.FEATURE_MOON)
       && game.settings.get(MODULE_ID, SETTINGS.SHOW_MOON_VISUALS);
     const selectedMoons = moonEnabled ? moonStates(selected, config).map((moon) => ({
@@ -108,13 +113,19 @@ export class CalendarApp extends HandlebarsApplicationMixin(ApplicationV2) {
       specialDescription: viewingSpecial ? specialDescription(this.viewDate, config) : null,
       selectedEvents: events.filter((event) => eventOccursOn(event, selected, config)).map((event) => eventContext(event, config)),
       authorLinks: AUTHOR_LINKS,
-      config
+      config,
+      selectedKey: dateKey(selected,config),
+      selectedDateKey:dateKey(selected,config),
+      activeSeasons: seasonsOn(selected,config),
+      specialColor: viewingSpecial ? (specialDefinition(this.viewDate,config).color??config.colors.special) : config.colors.special,
+      canDesign: canView(config,"structure",game.user) || canView(config,"phases",game.user),
+      extraDays: config.specialDays.map(s=>({name:s.name,color:s.color,dateKey:dateKey({year:this.viewDate.year,specialDay:-s.slot},config)}))
     };
 
     if (this.displayMode === "month" && !viewingSpecial) {
       context.weekdays = config.weekdays;
       context.cells = buildMonthCells(this.viewDate, current, selected, events, moonEnabled, config);
-      context.seasonColor = config.seasons[this.viewDate.season - 1].color;
+      context.seasonColor = config.seasons[this.viewDate.season - 1].months[this.viewDate.month-1].color;
     }
     if (this.displayMode === "year") context.year = buildYear(this.viewDate.year, current, events, config);
     if (this.displayMode === "agenda") context.agenda = buildAgenda(events, config);
@@ -131,6 +142,7 @@ export class CalendarApp extends HandlebarsApplicationMixin(ApplicationV2) {
     root.querySelector("[data-action='gm-view']")?.addEventListener("click", () => this.#switchDataView("gm"));
     root.querySelector("[data-action='add-event']")?.addEventListener("click", () => this.#addEvent());
     root.querySelector("[data-action='set-current']")?.addEventListener("click", () => this.#setCurrentDate());
+    root.querySelector("[data-action='world-rules']")?.addEventListener("click", () => new WorldRulesApp().render({force:true}));
     root.querySelector("[data-action='configure']")?.addEventListener("click", () => new CalendarConfigApp().render({ force: true }));
     root.querySelectorAll("[data-display-mode]").forEach((button) => button.addEventListener("click", () => {
       this.displayMode = button.dataset.displayMode;
@@ -238,8 +250,26 @@ function buildMonthCells(viewDate, current, selected, events, moonEnabled, confi
   const month = season.months[viewDate.month - 1];
   const firstDate = normalizeDate({ year: viewDate.year, season: viewDate.season, month: viewDate.month, day: 1 }, config);
   const offset = weekdayIndex(firstDate, config) ?? 0;
-  const cells = Array.from({ length: offset }, () => ({ blank: true }));
+  const cells = [];
+  const width=config.weekdays.length;
+  const appendSpecials=(afterDay)=>{
+    const specials=config.specialDays.filter(s=>s.season===viewDate.season && s.month===viewDate.month && s.afterDay===afterDay);
+    for(const special of specials) {
+      while(cells.length%width)cells.push({blank:true});
+      const date={year:viewDate.year,specialDay:-special.slot};
+      cells.push({special:true,day:special.name,color:special.color,dateKey:dateKey(date,config),isCurrent:sameDate(date,current,config),isSelected:sameDate(date,selected,config),
+        events:events.filter(e=>eventOccursOn(e,date,config)).map(e=>eventContext(e,config))});
+      for(let i=1;i<width;i++)cells.push({skip:true});
+    }
+  };
+  appendSpecials(0);
+  for(let i=0;i<offset;i++) cells.push({blank:true});
   for (let day = 1; day <= month.days; day += 1) {
+    if(day>1 && config.specialDays.some(s=>s.season===viewDate.season && s.month===viewDate.month && s.afterDay===day-1)) {
+      appendSpecials(day-1);
+      const next=weekdayIndex({...viewDate,day},config);
+      for(let i=0;i<next;i++)cells.push({blank:true});
+    }
     const date = normalizeDate({ year: viewDate.year, season: viewDate.season, month: viewDate.month, day }, config);
     const dayEvents = events.filter((event) => eventOccursOn(event, date, config));
     const moons = moonEnabled ? moonStates(date, config) : [];
@@ -247,6 +277,7 @@ function buildMonthCells(viewDate, current, selected, events, moonEnabled, confi
       blank: false,
       dateKey: dateKey(date, config),
       day,
+      color: config.colors.weekdays[weekdayIndex(date,config)] ?? config.colors.day,
       weekday: weekdayName(date, config),
       isCurrent: sameDate(date, current, config),
       isSelected: sameDate(date, selected, config),
@@ -256,8 +287,9 @@ function buildMonthCells(viewDate, current, selected, events, moonEnabled, confi
       overflow: Math.max(0, dayEvents.length - 3)
     });
   }
+  appendSpecials(month.days);
   while (cells.length % config.weekdays.length !== 0) cells.push({ blank: true });
-  return cells;
+  return cells.filter(c=>!c.skip);
 }
 
 function buildYear(year, current, events, config) {
@@ -303,6 +335,7 @@ function eventContext(event, config) {
   }[event.visibility] ?? event.visibility;
   return {
     ...event,
+    color: eventColor(canChange(config,"eventColors",game.users.get(event.ownerId)) ? event : {...event,color:null},config),
     visibilityLabel,
     ownerName: game.users.get(event.ownerId)?.name ?? "Unbekannt",
     canPublish: game.user.isGM && event.visibility === VISIBILITY.GM,
@@ -313,7 +346,7 @@ function eventContext(event, config) {
 
 function specialDescription(date, config) {
   const value = normalizeDate(date, config);
-  const special = config.seasons[value.season - 1].specialDay;
+  const special = specialDefinition(value,config);
   if (special.description) return special.description;
   return special.outsideYear
     ? "Dieser Sondertag liegt zwischen den Jahren."

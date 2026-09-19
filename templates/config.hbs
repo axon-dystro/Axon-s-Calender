@@ -5,7 +5,7 @@
       <h1>{{config.name}}</h1>
       <p>Dein Kalender bleibt in dieser Foundry-Welt gespeichert. Kein Code, kein externer Dienst.</p>
     </div>
-    <div class="ac-config-presets">
+    <div class="ac-config-presets"><button type="button" data-action="world-rules">Sonne, Timer & Weltregeln</button>
       <button type="button" data-action="preset-illidor"><i class="fa-solid fa-gem"></i> Illidor-Preset</button>
       <button type="button" data-action="preset-blank"><i class="fa-solid fa-file-circle-plus"></i> Leerer Kalender</button>
     </div>
@@ -47,6 +47,7 @@
             <label><span>Monat</span><select name="currentMonth">{{#each state.months}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select></label>
             <label><span>Tag</span><select name="currentDay">{{#each state.days}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}}</option>{{/each}}</select></label>
           </div>
+          <label><span>Sondertag (bei Art Sondertag)</span><select name="currentSpecial">{{#each currentSpecials}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}</select></label>
           <label><span>Uhrzeit</span><input type="text" name="currentTime" value="{{state.time}}" inputmode="numeric" pattern="[0-9]+:[0-9]+" placeholder="21:00"></label>
         </div>
       </div>
@@ -54,7 +55,7 @@
       <div class="ac-section-heading compact"><div><span>03</span><h2>Wochenrhythmus</h2></div></div>
       <div class="ac-form-grid">
         <label><span>Wochenreset</span><select name="weekReset">{{#each weekResetOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
-        <label><span>Erster Wochentag (Index ab 0)</span><input type="number" name="firstWeekday" value="{{config.week.firstWeekday}}" min="0" max="13"></label>
+        <label><span>Erster Wochentag (Index ab 0)</span><input type="number" name="firstWeekday" value="{{config.week.firstWeekday}}" min="0" max="59"></label>
         <label class="span-2"><span>Wochentage · ein Name pro Zeile</span><textarea name="weekdays" rows="8" required>{{weekdaysText}}</textarea></label>
         <label class="ac-check span-2"><input type="checkbox" name="specialDaysAdvance" {{#if config.week.specialDaysAdvance}}checked{{/if}}><span>Sondertage verschieben den Wochenrhythmus um einen Tag</span></label>
       </div>
@@ -76,6 +77,7 @@
                 <div class="ac-month-row" data-month-row>
                   <span>M{{number}}</span>
                   <input data-month-name value="{{name}}" maxlength="80" aria-label="Monatsname">
+                  <input data-month-color type="color" value="{{color}}" aria-label="Monatsfarbe">
                   <label><input data-month-days type="number" value="{{days}}" min="1" max="999"><small>Tage</small></label>
                   <button type="button" class="icon" data-action="remove-month" data-season="{{../index}}" data-month="{{index}}" title="Monat entfernen"><i class="fa-solid fa-xmark"></i></button>
                 </div>
@@ -166,7 +168,7 @@
   </main>
 
   <footer class="ac-config-footer">
-    <span><i class="fa-solid fa-shield-halved"></i> Nur GMs können diese Weltkonfiguration speichern.</span>
+    <span><i class="fa-solid fa-shield-halved"></i> {{#if isGM}}Weltkonfiguration speichern{{else}}Nur freigegebene Änderungen werden an den Haupt-GM übergeben.{{/if}}</span>
     <button type="submit" class="primary"><i class="fa-solid fa-floppy-disk"></i> Kalender speichern</button>
   </footer>
 </form>

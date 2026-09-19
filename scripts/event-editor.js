@@ -1,3 +1,4 @@
+import { canChange, eventColor } from "./world-rules.js";
 import { EVENT_CATEGORIES, MODULE_ID, SETTINGS, VISIBILITY } from "./constants.js";
 import { compareDates, formatDate, isSpecialDate, normalizeDate } from "./calendar-engine.js";
 import { getCalendarConfig } from "./settings.js";
@@ -60,7 +61,11 @@ export class EventEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       canChooseVisibility: visibilityOptions.length > 1,
       fixedVisibility: selectedVisibility ?? { value: event.visibility, label: event.visibility },
       visibilityOptions,
-      categories: EVENT_CATEGORIES.map((category) => ({ ...category, selected: category.value === event.category })),
+      categories: config.categories.map((category) => ({ value:category.id,label:category.name,selected:category.id===event.category })),
+      eventColor: eventColor(event,config),
+      canChooseColor: canChange(config,"eventColors",game.user) && ["free","palette"].includes(config.eventColors.mode),
+      paletteMode: config.eventColors.mode === "palette",
+      palette: config.eventColors.palette.map(c=>({value:c,selected:c===eventColor(event,config)})),
       start: dateFormContext(event.start, config),
       end: dateFormContext(event.end, config),
       startLabel: formatDate(event.start, config),
@@ -113,6 +118,7 @@ export class EventEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       title: String(formData.get("title") || ""),
       description: String(formData.get("description") || ""),
       category: String(formData.get("category") || "event"),
+      color: String(formData.get("color") || this.eventData?.color || ""),
       visibility,
       ownerId: this.eventData?.ownerId ?? game.user.id,
       start: readDate(formData, "start"),
@@ -143,7 +149,7 @@ export class EventEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     for (const prefix of ["start", "end"]) {
       const kind = root.querySelector(`[name='${prefix}Kind']`)?.value;
       const seasonIndex = Number(root.querySelector(`[name='${prefix}Season']`)?.value ?? 1) - 1;
-      const specialEnabled = config.seasons[seasonIndex]?.specialDay.enabled;
+      const specialEnabled = config.seasons[seasonIndex]?.specialDay.enabled || config.specialDays.length>0;
       const specialOption = root.querySelector(`[name='${prefix}Kind'] option[value='special']`);
       if (specialOption) specialOption.disabled = !specialEnabled;
       if (kind === "special" && !specialEnabled) root.querySelector(`[name='${prefix}Kind']`).value = "regular";
@@ -193,7 +199,9 @@ function dateFormContext(date, config) {
   return {
     isRegular: !special,
     isSpecial: special,
-    specialAllowed: season.specialDay.enabled,
+    specialAllowed: season.specialDay.enabled || config.specialDays.length>0,
+    specials: [ ...config.seasons.flatMap((s,i)=>s.specialDay.enabled?[{value:i+1,name:s.specialDay.name}]:[]),
+      ...config.specialDays.map(s=>({value:-s.slot,name:s.name})) ].map(s=>({...s,selected:s.value===value.specialDay})),
     year: value.year,
     season: value.season,
     month: value.month ?? 1,
@@ -210,8 +218,9 @@ function readDate(formData, prefix) {
   const kind = String(formData.get(`${prefix}Kind`) || "regular");
   const year = Number(formData.get(`${prefix}Year`));
   const season = Number(formData.get(`${prefix}Season`));
-  if (kind === "special" && config.seasons[season - 1]?.specialDay.enabled) {
-    return normalizeDate({ year, season, specialDay: season }, config);
+  if (kind === "special") {
+    const specialDay=Number(formData.get(`${prefix}Special`) || season);
+    return normalizeDate({ year, season: specialDay>0?specialDay:season, specialDay }, config);
   }
   return normalizeDate({ year, season, month: Number(formData.get(`${prefix}Month`)), day: Number(formData.get(`${prefix}Day`)) }, config);
 }
