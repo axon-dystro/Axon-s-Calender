@@ -1,3 +1,5 @@
+import { publicConfig } from "./public-config.js";
+import { validateExtensions } from "./world-rules.js";
 import { ILLIDOR_PRESET, NEUTRAL_PRESET, normalizeCalendarConfig } from "./calendar-config.js";
 import { DATA_VERSION, DEFAULT_STATE, ILLIDOR_DEFAULT_STATE, MODULE_ID, PHASES, SETTINGS } from "./constants.js";
 
@@ -88,13 +90,32 @@ export function registerSettings(CalendarConfigApp) {
 }
 
 export function getCalendarConfig() {
-  return normalizeCalendarConfig(game.settings.get(MODULE_ID, SETTINGS.CALENDAR_CONFIG));
+  const privateConfig = game.user?.isGM ? game.journal?.find?.(entry=>entry.getFlag(MODULE_ID,"gmPlannerStore")===true)?.getFlag(MODULE_ID,"worldRules") : null;
+  return normalizeCalendarConfig(privateConfig ?? game.settings.get(MODULE_ID, SETTINGS.CALENDAR_CONFIG));
 }
 
 export async function setCalendarConfig(config) {
   if (!game.user.isGM) throw new Error("Nur ein GM darf den Kalender verändern.");
   const normalized = normalizeCalendarConfig(config);
-  await game.settings.set(MODULE_ID, SETTINGS.CALENDAR_CONFIG, normalized);
+  const errors=validateExtensions(normalized);
+  if(errors.length)throw new Error(errors.join(" "));
+  const previous=getCalendarConfig();
+  // Retiring an insertion must not silently move stored events to a regular date.
+  const removed=previous.specialDays.filter(s=>!normalized.specialDays.some(n=>n.slot===s.slot));
+  const { CalendarStore } = await import("./store.js");
+  if(removed.length) {
+    const events=[...CalendarStore.getPublicEvents(),...Array.from(game.users??[]).flatMap(u=>CalendarStore.getPersonalNotes(u)),...await CalendarStore.getGmEvents()];
+    const state=CalendarStore.getState();
+    if(removed.some(s=>state.specialDay===-s.slot || events.some(e=>e.start?.specialDay===-s.slot || e.end?.specialDay===-s.slot)))
+      throw new Error("Ein verwendeter Sondertag kann erst entfernt werden, wenn Datum und betroffene Ereignisse verschoben wurden.");
+  }
+  const journal=await CalendarStore.ensureGmJournal();
+  const before=journal.getFlag(MODULE_ID,"worldRules");
+  const projection=publicConfig(normalized);
+  // Redact client data first; a failed private save can safely restore the previous projection.
+  await game.settings.set(MODULE_ID, SETTINGS.CALENDAR_CONFIG, projection);
+  try { await journal.setFlag(MODULE_ID,"worldRules",normalized); }
+  catch(error) { await game.settings.set(MODULE_ID, SETTINGS.CALENDAR_CONFIG,publicConfig(before??previous)); throw error; }
   Hooks.callAll(`${MODULE_ID}.configChanged`, normalized);
   return normalized;
 }

@@ -51,7 +51,7 @@ Beim Erstellen einer Spielernotiz kann unter **Sichtbarkeit** zwischen **Privat 
 
 ## Datenspeicherung und Privatsphäre
 
-- Kalenderdefinition, aktueller Zeitpunkt und öffentliche Ereignisse: Foundry World Settings
+- vollständige Kalenderdefinition: geschütztes GM-Journal; Spielerprojektion, aktueller Zeitpunkt und öffentliche Ereignisse: Foundry World Settings
 - private und geteilte Spielernotizen: Flag des jeweiligen Foundry-Benutzers; private Einträge werden nur dem Besitzer angezeigt
 - geheime GM-Planung: versteckter JournalEntry mit GM-only-Berechtigung
 - Exportdateien enthalten Struktur, aktuellen Zeitpunkt und Modulschalter, aber **keine** Ereignisse oder privaten Notizen
@@ -96,3 +96,82 @@ npm run check
 ```
 
 Entwicklung: Axon. Technische Umsetzung mit Unterstützung von ChatGPT.
+
+## Erweiterung 1.3 – Weltregeln (Beta)
+
+Im Kalender oben **Weltregeln** öffnen. Der bisherige Designer bleibt für Monatsgruppen,
+Monatslängen, Wochentage und tägliche Tagesphasen zuständig; der neue Dialog ergänzt:
+
+- **Sondertage**: eigene Datumskennungen, Platzierung vor einem Monat oder nach einem
+  beliebigen regulären Tag. Damit sind auch Wochen-, Monats- und Jahreszeitgrenzen möglich.
+  Mehrere Einfügungen am selben Punkt werden in Listenreihenfolge angezeigt. Im Monatsraster
+  stehen sie als volle Zeile außerhalb der Wochentagsspalten.
+- **Freie Jahreszeiten**: zusätzliche, von Monatsgruppen unabhängige Zeiträume vom ersten
+  bis zum letzten Jahrestag (Sondertage mitgezählt). Ein Ende vor dem Beginn überschreitet
+  den Jahreswechsel. Überlappende Jahreszeiten sind möglich.
+- **Sonne**: vorhandene tägliche Phasen, Tagesregeln oder ein fortlaufender mehrtägiger
+  Phasenzyklus. Bei Tagesregeln gewinnt Datum vor Wochentag vor Monat vor Jahreszeit;
+  innerhalb derselben Regelart gewinnt die letzte passende Regel. Gleiche Auf- und
+  Untergangszeiten bedeuten durchgehende Nacht; ganztägiges Licht ist als individuelle
+  Zyklusphase mit Dunkelheit 0 möglich.
+- **Timer**: Start-/Endminute, Geschwindigkeit, Spielpause und optionaler Stopp am Ende.
+  Rate 1 bedeutet eine Ingame-Minute pro echter Sekunde. Ende ≤ Beginn liegt am Folgetag.
+  Start setzt die Uhr auf die Startminute. Nur ein verbundener Haupt-GM führt den Timer
+  aus. Beim Neuladen/GM-Wechsel wird er gestoppt; keine Offline-Nachholzeit. Erlaubte
+  Spieler können Start/Stopp an diesen GM übergeben.
+- **Farben**: Tage, einzelne Wochentage, Wochenüberschriften, Monate, Jahreszeiten,
+  Sondertage, Sonnenphasen, Einträge und Kategorien. Drei Theme-Vorlagen und sechs
+  globale Designfarben sind verfügbar.
+- **Eintragsfarben**: freie Auswahl, Palette, Kategorie oder eine feste Farbe. Verbindliche
+  Kategoriefarben überschreiben freie Auswahl; die globale feste Farbe hat höchste Priorität.
+  Quest ist standardmäßig blau. Bestehende Kategorien und Datumsfelder bleiben erhalten.
+- **Rechte**: GM-Vorgabe, nur ansehen, ändern oder verborgen je Bereich. Änderungen der
+  freigegebenen Weltkonfiguration gelten für alle, nicht nur für den betreffenden Spieler.
+  Rechte und Farbregeln können ausschließlich GMs ändern. Freigegebene Änderungen laufen
+  als Foundry-Benutzerdokument-Update; der Haupt-GM prüft Absender, aktuellen Rechtezustand
+  und Konflikte. Es gibt keinen Socket-Befehl, der ungeprüft Weltkonfiguration schreibt.
+
+### Beispiel: Montag bis Donnerstag Sonne
+
+Bei 24 Stunden × 60 Minuten und einem siebentägigen Sonnenzyklus:
+
+| Phase | Beginn seit Zyklusstart | Dunkelheit |
+|---|---:|---:|
+| Licht | 360 (Montag 06:00) | 0 |
+| Nacht | 5400 (Donnerstag 18:00) | 1 |
+
+Der Zyklus beginnt am ersten Kalendertag von Jahr 1 um 00:00. Er läuft über alle
+Jahreswechsel hinweg weiter. In diesem Beispiel entspricht der erste Tag Montag;
+bei einem anderen Wochenanfang kann der Versatz angepasst werden.
+
+### Datenschutz und Datenbestand
+
+Die vollständige Weltkonfiguration liegt nach dem ersten Speichern in einem nur für GMs
+lesbaren Journal. Die Welt-Einstellung enthält die Spielerprojektion. Verborgene Sonnenregeln,
+Jahreszeitbereiche und verborgene Namen/Beschreibungen werden darin entfernt oder anonymisiert.
+Anonyme Kalendergeometrie (Längen, Einfügepositionen) und sichtbare Farben bleiben für die
+Berechnung und Darstellung gemeinsamer Ereignisse auf Spielergeräten verfügbar. „Verborgen“
+kann diese notwendigen Informationen nicht zugleich geheim halten. Die öffentliche
+Kalenderdarstellung anonymisiert entsprechende Namen. Spieler-Notizen in User-Flags haben
+weiterhin die bisherige, oberflächenbezogene Sichtbarkeit; echte GM-Geheimnisse gehören ins
+geschützte GM-Journal.
+
+Die interne Modul-ID bleibt `illidor-calendar`. Schema 3 wird beim Lesen verlustfrei um
+Standardwerte ergänzt. Sondertage verwenden stabile negative Kennungen; die bisherigen
+positiven Sondertagskennungen und regulären Datumsfelder bleiben gültig. Ein Sondertag,
+auf dem das aktuelle Datum oder eine Ereignisgrenze liegt, kann nicht entfernt werden,
+bevor diese Verweise verschoben wurden. Kalenderexporte enthalten auch die neuen Regeln;
+ein GM-Export enthält deshalb gegebenenfalls verborgene Weltdetails.
+
+### Prüfen und verpacken
+
+`npm run check`, `npm test` und `npm run package` prüfen den Quelltext und bauen mit Python 3
+`dist/axons-calender.zip` sowie das passende `dist/module.json`. Die ZIP enthält das Manifest
+direkt im Stamm. Die Download-URL wird auf den zugehörigen Versions-Tag gesetzt. Diese Dateien
+sind erst nach Veröffentlichung beider Assets unter diesem Tag online installierbar.
+Der Branch veröffentlicht keinen Release und ändert keine laufende Foundry-Welt.
+
+Vor einem stabilen Release steht ein Test in einer echten Foundry-14-Testwelt aus:
+GM plus Spieler verbinden, Rechtewechsel/GM-Wechsel testen, Timer und optionale Szenenhelligkeit
+prüfen sowie einen bestehenden Kalender mit Ereignissen importieren. Die automatisierten Tests
+ersetzen diesen Integrationstest nicht.

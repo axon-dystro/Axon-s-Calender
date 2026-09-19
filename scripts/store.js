@@ -1,3 +1,4 @@
+import { canChange, eventColor } from "./world-rules.js";
 import { DEFAULT_STATE, MODULE_ID, SETTINGS, VISIBILITY } from "./constants.js";
 import { minutesPerDay } from "./calendar-config.js";
 import {
@@ -8,6 +9,7 @@ import {
   normalizeMinute,
   phaseById,
   phaseForMinute,
+  solarPhase,
   sameDate,
   stateFromAbsoluteMinute
 } from "./calendar-engine.js";
@@ -30,7 +32,7 @@ export class CalendarStore {
     const minuteOfDay = Number.isFinite(Number(stored.minuteOfDay))
       ? normalizeMinute(stored.minuteOfDay, config)
       : (legacyPhase?.startMinute ?? config.phases[0].startMinute);
-    const phase = phaseForMinute(minuteOfDay, config);
+    const phase = solarPhase({ ...date, minuteOfDay }, config);
     return {
       ...date,
       minuteOfDay,
@@ -45,11 +47,11 @@ export class CalendarStore {
     const previous = this.getState();
     const date = normalizeDate(nextState, config);
     const minuteOfDay = normalizeMinute(nextState.minuteOfDay ?? previous.minuteOfDay, config);
-    const phase = phaseForMinute(minuteOfDay, config);
+    const phase = solarPhase({ ...date, minuteOfDay }, config);
     const normalized = {
       ...date,
       minuteOfDay,
-      phase: phase.id,
+      phase: config.permissions.sun === "hidden" ? "hidden" : phase.id,
       revision: Number(previous.revision ?? 0) + 1
     };
     await game.settings.set(MODULE_ID, SETTINGS.CALENDAR_STATE, normalized);
@@ -160,6 +162,11 @@ export class CalendarStore {
   }
 
   static async saveEvent(event, originalVisibility = null) {
+    const config = getCalendarConfig();
+    if (!game.user.isGM && !game.settings.get(MODULE_ID, SETTINGS.FEATURE_PUBLIC_EVENTS)
+      && !game.settings.get(MODULE_ID, SETTINGS.FEATURE_PERSONAL_NOTES)) throw new Error("Spielereinträge sind deaktiviert.");
+    const original = this.getPersonalNotes().find(e=>e.id===event.id);
+    if (!game.user.isGM && !canChange(config,"eventColors",game.user)) event={...event,color:original?.color};
     const sanitized = sanitizeEvent(event);
     const originalStorage = storageForEvent(event, originalVisibility ?? sanitized.visibility);
     if (!game.user.isGM) {
@@ -299,6 +306,7 @@ function sanitizeEvent(event) {
     title: String(event.title || "Unbenannter Eintrag").trim().slice(0, 160),
     description: String(event.description || "").trim().slice(0, 10000),
     category: String(event.category || "event"),
+    color: eventColor(event,config),
     visibility: Object.values(VISIBILITY).includes(event.visibility) ? event.visibility : VISIBILITY.PRIVATE,
     ownerId: String(event.ownerId || game.user.id),
     storage: Object.values(EVENT_STORAGE).includes(event.storage) ? event.storage : null,

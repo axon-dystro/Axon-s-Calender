@@ -1,3 +1,6 @@
+import { WorldRulesApp } from "./rules-app.js";
+import { CalendarClock } from "./clock.js";
+import { processRulesRequest, showRulesResult } from "./rules-permissions.js";
 import { MODULE_ID, MODULE_TITLE, SETTINGS } from "./constants.js";
 import { CalendarApp } from "./calendar-app.js";
 import { CalendarConfigApp } from "./config-app.js";
@@ -23,6 +26,9 @@ Hooks.once("init", () => {
   game.modules.get(MODULE_ID).api = {
     openCalendar: () => CalendarApp.open(),
     openDesigner: () => game.user.isGM && new CalendarConfigApp().render({ force: true }),
+    openWorldRules: () => new WorldRulesApp().render({force:true}),
+    startTimer: () => CalendarClock.start(),
+    stopTimer: () => game.user.isGM && CalendarClock.stop(),
     getConfig: () => getCalendarConfig(),
     getState: () => CalendarStore.getState(),
     setState: (state) => CalendarStore.setState(state),
@@ -54,10 +60,11 @@ Hooks.once("ready", async () => {
 
 Hooks.on("renderHotbar", () => CalendarHud.mount());
 Hooks.on(`${MODULE_ID}.settingsChanged`, () => refreshAll());
-Hooks.on(`${MODULE_ID}.configChanged`, () => refreshAll());
+Hooks.on(`${MODULE_ID}.configChanged`, () => { CalendarClock.stop(); return refreshAll(); });
 Hooks.on(`${MODULE_ID}.dataChanged`, () => refreshAll());
 Hooks.on("updateWorldTime", () => CalendarHud.render());
-Hooks.on("updateJournalEntry", (document) => {
+Hooks.on("updateJournalEntry", (document, changes) => {
+  if (changes?.flags?.[MODULE_ID]?.worldRules) CalendarClock.stop();
   if (document.getFlag(MODULE_ID, "gmPlannerStore")) refreshAll();
 });
 Hooks.on("updateUser", () => refreshAll());
@@ -88,3 +95,6 @@ function debounce(callback, wait) {
     timeout = setTimeout(() => callback(...args), wait);
   };
 }
+
+Hooks.on("updateUser", processRulesRequest);
+Hooks.on("updateUser", showRulesResult);

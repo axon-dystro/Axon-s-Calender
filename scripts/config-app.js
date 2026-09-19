@@ -1,3 +1,6 @@
+import { WorldRulesApp } from "./rules-app.js";
+import { canChange, canView } from "./world-rules.js";
+import { submitRules } from "./rules-permissions.js";
 import { createBlankPreset, ILLIDOR_PRESET, normalizeCalendarConfig, validateCalendarConfig } from "./calendar-config.js";
 import { MODULE_ID, SETTINGS } from "./constants.js";
 import { formatTime, isSpecialDate, normalizeDate } from "./calendar-engine.js";
@@ -39,6 +42,7 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
   constructor(options = {}) {
     super(options);
     this.draft = getCalendarConfig();
+    this.base=structuredClone(this.draft);
     this.stateDraft = CalendarStore.getState();
     this.featureDraft = getFeatureSettings();
     this.activeTab = "general";
@@ -65,6 +69,7 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
 
     return {
       config,
+      isGM: game.user.isGM,
       tabs,
       message: this.message,
       weekdaysText: config.weekdays.join("\n"),
@@ -86,6 +91,7 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
         number: index + 1,
         startTime: formatTime(phase.startMinute, config)
       })),
+      currentSpecials: [...config.seasons.flatMap((s,i)=>s.specialDay.enabled?[{value:i+1,name:s.specialDay.name}]:[]),...config.specialDays.map(s=>({value:-s.slot,name:s.name}))].map(s=>({...s,selected:s.value===state.specialDay})),
       state: {
         ...state,
         kind: isSpecialDate(state) ? "special" : "regular",
@@ -108,6 +114,21 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
     const form = root.querySelector("form");
     if (!form) return;
 
+    if (!game.user.isGM) {
+      const base=getCalendarConfig();
+      for(const [panel,section] of [["structure","structure"],["phases","phases"]]) {
+        if(!canView(base,section,game.user)) {
+          root.querySelector(`[data-tab="${panel}"]`)?.setAttribute("hidden","");
+          root.querySelector(`[data-panel="${panel}"]`)?.setAttribute("hidden","");
+        }
+      }
+      root.querySelectorAll("input,textarea,select,button[data-action]").forEach(input=>{
+        const panel=input.closest("[data-panel]")?.dataset.panel;
+        const allowed=(panel==="structure"&&canChange(base,"structure",game.user)) || (panel==="phases"&&canChange(base,"phases",game.user))
+          || (["weekdays","weekReset","firstWeekday","specialDaysAdvance"].includes(input.name)&&canChange(base,"structure",game.user));
+        if(!allowed) input.disabled=true;
+      });
+    }
     form.addEventListener("submit", (event) => this.#save(event));
     root.querySelectorAll("[data-tab]").forEach((button) => button.addEventListener("click", () => {
       this.#capture(root);
@@ -135,6 +156,7 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
   async #action(event, root) {
     const button = event.currentTarget;
     const action = button.dataset.action;
+    if (action === "world-rules") return new WorldRulesApp().render({force:true});
     if (action === "import-file") return;
     event.preventDefault();
     this.#capture(root);
@@ -199,6 +221,7 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
     draft.description = String(data.get("calendarDescription") ?? draft.description);
     draft.eraLabel = String(data.get("eraLabel") ?? draft.eraLabel);
     draft.theme = {
+      ...draft.theme,
       primary: String(data.get("themePrimary") ?? draft.theme?.primary ?? "#f06bc7"),
       secondary: String(data.get("themeSecondary") ?? draft.theme?.secondary ?? "#a765ff")
     };
@@ -218,6 +241,7 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
     draft.seasons = Array.from(root.querySelectorAll("[data-season-row]")).map((row, seasonIndex) => {
       const previous = draft.seasons[seasonIndex] ?? {};
       const months = Array.from(row.querySelectorAll("[data-month-row]")).map((monthRow, monthIndex) => ({
+        color: monthRow.querySelector("[data-month-color]")?.value ?? previous.months?.[monthIndex]?.color,
         id: previous.months?.[monthIndex]?.id ?? `season-${seasonIndex + 1}-month-${monthIndex + 1}`,
         name: monthRow.querySelector("[data-month-name]")?.value ?? `Monat ${monthIndex + 1}`,
         days: Number(monthRow.querySelector("[data-month-days]")?.value ?? 28)
@@ -266,7 +290,7 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
       season,
       month: kind === "special" ? null : Number(data.get("currentMonth") ?? 1),
       day: kind === "special" ? null : Number(data.get("currentDay") ?? 1),
-      specialDay: kind === "special" ? season : null,
+      specialDay: kind === "special" ? Number(data.get("currentSpecial") || season) : null,
       minuteOfDay: parseTime(String(data.get("currentTime") ?? "00:00"), this.draft.day.minutesPerHour)
     };
     this.featureDraft = Object.fromEntries(FEATURE_ROWS.map(([key]) => [key, data.has(`feature.${key}`)]));
@@ -275,17 +299,28 @@ export class CalendarConfigApp extends HandlebarsApplicationMixin(ApplicationV2)
   async #save(event) {
     event.preventDefault();
     this.#capture(this.element);
+    if(game.user.isGM && JSON.stringify(this.base)!==JSON.stringify(getCalendarConfig())) return ui.notifications.warn("Die Kalenderregeln wurden inzwischen geändert. Bitte den Designer neu öffnen.");
     const issues = validateCalendarConfig(this.draft);
     if (issues.length) {
       this.message = { error: true, text: issues.join(" ") };
       return this.render({ force: true });
     }
     try {
+      if (!game.user.isGM) {
+        const base = this.base;
+        const next = structuredClone(base);
+        if (canChange(base,"structure",game.user)) for (const key of ["weekdays","week","seasons"]) next[key]=this.draft[key];
+        if (canChange(base,"phases",game.user)) for (const key of ["day","phases"]) next[key]=this.draft[key];
+        await submitRules(base,next);
+        ui.notifications.info("Freigegebene Strukturänderungen an den Haupt-GM übergeben.");
+        return this.close();
+      }
       const config = await setCalendarConfig(this.draft);
       applyTheme(config);
       await setFeatureSettings(this.featureDraft);
       await CalendarStore.setState({ ...normalizeDate(this.stateDraft, config), minuteOfDay: this.stateDraft.minuteOfDay }, "designer-save", { syncFoundryTime: false });
       this.draft = config;
+      this.base=structuredClone(config);
       this.stateDraft = CalendarStore.getState();
       this.message = { success: true, text: "Kalender gespeichert. Alle verbundenen Spieler sehen die Änderungen sofort." };
       ui.notifications.info("Axon´s Calender wurde gespeichert.");
